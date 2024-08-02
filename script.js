@@ -11,12 +11,21 @@ const downloadLink = document.getElementById('downloadLink');
 let mediaRecorder;
 let recordedChunks = [];
 
-// Access webcam
-navigator.mediaDevices.getUserMedia({ video: true })
+// Access webcam with mobile-friendly constraints
+navigator.mediaDevices.getUserMedia({ 
+    video: { 
+        facingMode: "user" // Use "environment" for rear camera
+    } 
+})
     .then(stream => {
         console.log('Stream obtained');
         videoElement.srcObject = stream;
         videoElement.play(); // Ensure the video element starts playing the stream
+
+        videoElement.onloadedmetadata = () => {
+            console.log('Video metadata loaded');
+            videoElement.play();
+        };
 
         mediaRecorder = new MediaRecorder(stream);
 
