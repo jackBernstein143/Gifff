@@ -43,6 +43,7 @@ stopButton.addEventListener('click', () => {
 });
 
 function convertToGIF(videoBlob) {
+
     const gif = new GIF({
         workers: 2,
         quality: 10
