@@ -136,8 +136,23 @@ captionInput.addEventListener('input', () => {
 });
 
 function adjustInputWidth() {
-    captionInput.style.width = '1px'; // Reset to minimum
-    captionInput.style.width = Math.min(captionInput.scrollWidth, captionInput.parentElement.offsetWidth * 0.8) + 'px';
+    // Create a hidden span to measure text width
+    const span = document.createElement('span');
+    span.style.visibility = 'hidden';
+    span.style.position = 'absolute';
+    span.style.whiteSpace = 'pre';
+    span.style.font = window.getComputedStyle(captionInput).font;
+    document.body.appendChild(span);
+
+    // Set span content and get its width
+    span.textContent = captionInput.value || captionInput.placeholder;
+    const textWidth = span.offsetWidth;
+
+    // Remove the span
+    document.body.removeChild(span);
+
+    // Set input width to match text (plus some padding)
+    captionInput.style.width = `${Math.min(textWidth + 20, captionInput.parentElement.offsetWidth * 0.8)}px`;
 }
 
 captionInput.addEventListener('keydown', (e) => {
@@ -164,24 +179,51 @@ captionDisplay.addEventListener('click', () => {
 
 function createShareableGIF(originalGifBlob) {
     return new Promise((resolve) => {
+        // Load the original GIF
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            
-            // Add caption
-            const caption = captionInput.value || captionDisplay.textContent;
-            if (caption) {
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.textAlign = 'center';
-                ctx.fillText(caption, canvas.width / 2, canvas.height - 20);
+
+            // Create a new GIF
+            const gif = new GIF({
+                workers: 2,
+                quality: 10,
+                width: canvas.width,
+                height: canvas.height,
+                workerScript: './gif.worker.js'
+            });
+
+            // Function to add frame with caption
+            function addFrameWithCaption() {
+                ctx.drawImage(img, 0, 0);
+                
+                // Add caption
+                const caption = captionInput.value || captionDisplay.textContent;
+                if (caption) {
+                    ctx.font = '20px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(caption, canvas.width / 2, canvas.height - 20);
+                }
+
+                gif.addFrame(ctx, {copy: true, delay: 100});
+
+                if (gif.frames.length < 30) { // Limit to 30 frames for performance
+                    setTimeout(addFrameWithCaption, 100);
+                } else {
+                    gif.render();
+                }
             }
-            
-            canvas.toBlob(resolve, 'image/gif');
+
+            addFrameWithCaption();
+
+            gif.on('finished', (blob) => {
+                resolve(blob);
+            });
         };
         img.src = URL.createObjectURL(originalGifBlob);
     });
