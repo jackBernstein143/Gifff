@@ -14,8 +14,10 @@ let recordedChunks = [];
 // Access webcam
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
+        console.log('Stream obtained');
         videoElement.srcObject = stream;
         videoElement.play(); // Ensure the video element starts playing the stream
+
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (event) => {
@@ -36,12 +38,14 @@ navigator.mediaDevices.getUserMedia({ video: true })
     });
 
 startButton.addEventListener('click', () => {
+    console.log('Recording started');
     mediaRecorder.start();
     startButton.disabled = true;
     stopButton.disabled = false;
 });
 
 stopButton.addEventListener('click', () => {
+    console.log('Recording stopped');
     mediaRecorder.stop();
     startButton.disabled = false;
     stopButton.disabled = true;
