@@ -2,26 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Video to GIF Converter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GIF Creator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        body, html {
+            height: 100%;
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            touch-action: none;
         }
-        #videoContainer {
+        .container {
+            position: relative;
             width: 320px;
             height: 320px;
-            position: relative;
-            overflow: hidden;
-            border-radius: 20px;
         }
         #video, #gif {
             width: 100%;
@@ -35,35 +32,54 @@
             top: 0;
             left: 0;
         }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
+        #record-button, #share-button {
+            position: absolute;
+            bottom: -88px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
             border: none;
-            border-radius: 5px;
+            background-color: #ff4d4d;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
-        #downloadLink {
+        #share-button {
             display: none;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #008CBA;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
+            background-color: #4CAF50;
+        }
+        #close-button, #flip-button {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background-size: cover;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+        #close-button {
+            top: 10px;
+            right: 10px;
+            background-image: url('https://uploads-ssl.webflow.com/666644756f0e47b6407ce49c/6695d3ac001e82f6fbf3f2a9_Close_round.png');
+            display: none;
+        }
+        #flip-button {
+            bottom: 10px;
+            right: 10px;
+            background-image: url('https://uploads-ssl.webflow.com/666644756f0e47b6407ce49c/669969f71d7fd7241ce7e022_flip_camera_android.png');
         }
     </style>
 </head>
 <body>
-    <div id="videoContainer">
+    <div class="container">
         <video id="video" autoplay muted playsinline></video>
         <img id="gif" alt="Generated GIF">
+        <button id="close-button"></button>
+        <button id="flip-button"></button>
+        <button id="record-button"></button>
+        <button id="share-button"></button>
     </div>
-    <button id="startRecording">Start Recording</button>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <a id="downloadLink" download="output.gif">Download GIF</a>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
     <script src="script.js"></script>
 </body>
