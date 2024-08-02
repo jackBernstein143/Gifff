@@ -64,6 +64,7 @@ stopButton.addEventListener('click', () => {
 });
 
 function convertToGIF(videoBlob) {
+    console.log('Converting to GIF...');
     const gif = new GIF({
         workers: 2,
         quality: 10
@@ -87,6 +88,7 @@ function convertToGIF(videoBlob) {
     });
 
     gif.on('finished', (blob) => {
+        console.log('GIF rendering finished');
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
@@ -94,4 +96,3 @@ function convertToGIF(videoBlob) {
         downloadLink.href = gifURL;
     });
 }
-
