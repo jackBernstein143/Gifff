@@ -32,7 +32,38 @@
             top: 0;
             left: 0;
         }
-        #record-button, #share-button {
+        .record-button-container {
+            position: absolute;
+            bottom: -88px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 88px;
+            height: 88px;
+        }
+        #record-button {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            background-color: #ff4d4d;
+        }
+        #progress-ring {
+            transform: rotate(-90deg);
+        }
+        #progress-ring circle {
+            stroke-dasharray: 238.76;
+            stroke-dashoffset: 238.76;
+            stroke: #ff4d4d;
+            stroke-width: 6px;
+            fill: transparent;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+        #share-button {
             position: absolute;
             bottom: -88px;
             left: 50%;
@@ -42,12 +73,6 @@
             border-radius: 50%;
             border: none;
             cursor: pointer;
-            transition: transform 0.2s;
-        }
-        #record-button {
-            background-color: #ff4d4d;
-        }
-        #share-button {
             display: none;
             background-color: #41C1EA;
             background-image: url('https://uploads-ssl.webflow.com/666644756f0e47b6407ce49c/6690562939a9c723b376c755_IoPaperPlane.png');
@@ -88,7 +113,12 @@
         <img id="gif" alt="Generated GIF">
         <button id="close-button"></button>
         <button id="flip-button"></button>
-        <button id="record-button"></button>
+        <div class="record-button-container">
+            <svg id="progress-ring" width="88" height="88">
+                <circle r="38" cx="44" cy="44"/>
+            </svg>
+            <button id="record-button"></button>
+        </div>
         <button id="share-button"></button>
         <canvas id="canvas"></canvas>
     </div>
