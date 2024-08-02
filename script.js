@@ -136,7 +136,7 @@ captionInput.addEventListener('input', () => {
 });
 
 function adjustInputWidth() {
-    captionInput.style.width = 'auto';
+    captionInput.style.width = '1px'; // Reset to minimum
     captionInput.style.width = Math.min(captionInput.scrollWidth, captionInput.parentElement.offsetWidth * 0.8) + 'px';
 }
 
@@ -162,6 +162,31 @@ captionDisplay.addEventListener('click', () => {
     showCaptionInput();
 });
 
+function createShareableGIF(originalGifBlob) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Add caption
+            const caption = captionInput.value || captionDisplay.textContent;
+            if (caption) {
+                ctx.font = '20px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.fillText(caption, canvas.width / 2, canvas.height - 20);
+            }
+            
+            canvas.toBlob(resolve, 'image/gif');
+        };
+        img.src = URL.createObjectURL(originalGifBlob);
+    });
+}
+
 recordButton.addEventListener('touchstart', (e) => {
     e.preventDefault();
     startRecording();
@@ -181,14 +206,15 @@ shareButton.addEventListener('click', () => {
     if (navigator.share) {
         fetch(gifImg.src)
             .then(res => res.blob())
-            .then(blob => {
-                const file = new File([blob], "my_gif.gif", { type: "image/gif" });
+            .then(createShareableGIF)
+            .then(shareableBlob => {
+                const file = new File([shareableBlob], "my_gif.gif", { type: "image/gif" });
                 navigator.share({
                     files: [file],
                     title: 'Check out my GIF!',
-                    text: captionInput.value || captionDisplay.textContent || 'I made this GIF using the awesome GIF Creator app!'
+                    text: 'I made this GIF using the awesome GIF Creator app!'
                 }).then(() => console.log('Successful share'))
-                    .catch((error) => console.log('Error sharing', error));
+                  .catch((error) => console.log('Error sharing', error));
             });
     } else {
         console.log('Web Share API not supported');
