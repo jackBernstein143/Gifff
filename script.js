@@ -8,24 +8,35 @@ const canvas = document.getElementById('canvas');
 const downloadLink = document.getElementById('downloadLink');
 const logElement = document.getElementById('log');
 
+let isRecording = false;
+let recordingFrames = [];
+let videoWidth, videoHeight;
+
 function logMessage(message) {
     console.log(message);
     logElement.textContent += `${message}\n`;
     logElement.scrollTop = logElement.scrollHeight;
 }
 
-let isRecording = false;
-let recordingFrames = [];
-
 async function setupCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: 320, height: 240 }
+            video: { facingMode: "user" }
         });
         logMessage('Stream obtained');
         videoElement.srcObject = stream;
         await videoElement.play();
         logMessage('Video started playing');
+
+        // Get the actual video dimensions
+        videoWidth = videoElement.videoWidth;
+        videoHeight = videoElement.videoHeight;
+
+        // Set canvas dimensions to match video
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+
+        logMessage(`Video dimensions: ${videoWidth}x${videoHeight}`);
     } catch (error) {
         logMessage(`Error accessing webcam: ${error}`);
         alert('Unable to access the camera. Please ensure you have granted permission.');
@@ -58,7 +69,7 @@ function stopRecording() {
 function captureFrame() {
     if (!isRecording) return;
 
-    canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    canvas.getContext('2d').drawImage(videoElement, 0, 0, videoWidth, videoHeight);
     recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
 
     if (recordingFrames.length < 50) {  // Limit to 50 frames
@@ -73,8 +84,8 @@ function createGIF() {
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: 320,
-        height: 240,
+        width: videoWidth,
+        height: videoHeight,
         workerScript: './gif.worker.js'
     });
 
