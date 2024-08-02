@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video to GIF Converter</title>
+    <title>Square Video to GIF Converter</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,14 +19,14 @@
         }
         #video {
             width: 100%;
-            height: auto;
-            border: 2px solid red;
+            aspect-ratio: 1 / 1;
             object-fit: cover;
+            border: 2px solid red;
         }
         #gif {
             display: none;
-            max-width: 100%;
-            height: auto;
+            width: 100%;
+            aspect-ratio: 1 / 1;
             object-fit: contain;
         }
         #log {
@@ -55,7 +55,7 @@
     </style>
 </head>
 <body>
-    <h1>Record Video and Create GIF</h1>
+    <h1>Record Square Video and Create GIF</h1>
     <div id="videoContainer">
         <video id="video" autoplay muted playsinline></video>
         <img id="gif" alt="Generated GIF">
