@@ -49,7 +49,7 @@ function stopRecording() {
     if (!isRecording) return;
     isRecording = false;
     clearInterval(recordingInterval);
-    recordButton.style.transform = 'translate(-50%, -50%) scale(1)';
+    recordButton.style.transform = 'scale(1)';
     createGIF();
 }
 
