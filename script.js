@@ -5,16 +5,22 @@ const shareButton = document.getElementById('share-button');
 const closeButton = document.getElementById('close-button');
 const flipButton = document.getElementById('flip-button');
 const canvas = document.getElementById('canvas');
+const progressRing = document.querySelector('#progress-ring circle');
 const captionInput = document.getElementById('caption-input');
 const captionDisplay = document.getElementById('caption-display');
 
 let isRecording = false;
 let recordingFrames = [];
 let recordingInterval;
+let recordingTimeout;
+let recordingStartTime;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
-let finalGifBlob = null;
+
+const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
+progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+progressRing.style.strokeDashoffset = circumference;
 
 async function setupCamera() {
     try {
@@ -32,22 +38,43 @@ async function setupCamera() {
     }
 }
 
+function setProgress(percent) {
+    const offset = circumference - percent / 100 * circumference;
+    progressRing.style.strokeDashoffset = offset;
+}
+
 function startRecording() {
     if (isRecording) return;
     isRecording = true;
     recordingFrames = [];
-    recordButton.style.transform = 'scale(1.1)';
+    recordButton.classList.add('recording');
+    progressRing.style.display = 'block';
+    recordingStartTime = Date.now();
     recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
-    setTimeout(stopRecording, maxRecordingTime);
+    recordingTimeout = setTimeout(stopRecording, maxRecordingTime);
+    requestAnimationFrame(updateProgress);
 }
 
 function stopRecording() {
     if (!isRecording) return;
     isRecording = false;
     clearInterval(recordingInterval);
-    recordButton.style.transform = 'scale(1)';
+    clearTimeout(recordingTimeout);
+    recordButton.classList.remove('recording');
+    progressRing.style.display = 'none';
+    setProgress(0);
     if (recordingFrames.length > 0) {
         createGIF();
+    }
+}
+
+function updateProgress() {
+    if (!isRecording) return;
+    const elapsedTime = Date.now() - recordingStartTime;
+    const progress = (elapsedTime / maxRecordingTime) * 100;
+    setProgress(progress);
+    if (progress < 100) {
+        requestAnimationFrame(updateProgress);
     }
 }
 
@@ -70,7 +97,7 @@ function createGIF() {
         quality: 10,
         width: squareSize,
         height: squareSize,
-        workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+        workerScript: './gif.worker.js'
     });
 
     recordingFrames.forEach((frame, index) => {
@@ -85,7 +112,6 @@ function createGIF() {
     });
 
     gif.on('finished', (blob) => {
-        finalGifBlob = blob;
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
@@ -93,76 +119,77 @@ function createGIF() {
         closeButton.style.display = 'block';
         shareButton.style.display = 'block';
         recordButton.style.display = 'none';
-        captionInput.style.display = 'block';
+        flipButton.style.display = 'none';
+        showCaptionInput();
     });
 }
 
-function addCaptionToGIF() {
-    const caption = captionInput.value.trim();
-    if (!caption) return;
+function showCaptionInput() {
+    captionInput.style.display = 'block';
+    captionInput.value = '';
+    adjustInputWidth();
+    captionInput.focus();
+}
 
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = squareSize;
-    tempCanvas.height = squareSize;
-    const ctx = tempCanvas.getContext('2d');
+captionInput.addEventListener('input', () => {
+    adjustInputWidth();
+});
 
-    const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        width: squareSize,
-        height: squareSize,
-        workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
-    });
+function adjustInputWidth() {
+    captionInput.style.width = '1px'; // Reset to minimum
+    captionInput.style.width = Math.min(captionInput.scrollWidth, captionInput.parentElement.offsetWidth * 0.8) + 'px';
+}
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const gifReader = new GIF.Parser(new Uint8Array(e.target.result));
-        gifReader.onParse = function(parsedGif) {
-            parsedGif.frames.forEach((frame) => {
-                ctx.putImageData(frame.imageData, 0, 0);
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(caption, squareSize / 2, squareSize - 20);
-                gif.addFrame(ctx, { delay: frame.delay, copy: true });
-            });
-            gif.render();
-        };
-        gifReader.parse();
-    };
-    reader.readAsArrayBuffer(finalGifBlob);
+captionInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        finalizeCaptionInput();
+    }
+});
 
-    gif.on('finished', (blob) => {
-        finalGifBlob = blob;
-        const gifURL = URL.createObjectURL(blob);
-        gifImg.src = gifURL;
+function finalizeCaptionInput() {
+    if (captionInput.value.trim()) {
+        captionDisplay.textContent = captionInput.value;
+        captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
-        captionDisplay.textContent = caption;
-        captionDisplay.style.display = 'block';
-    });
+    } else {
+        captionInput.style.display = 'none';
+    }
 }
 
-recordButton.addEventListener('mousedown', startRecording);
-recordButton.addEventListener('mouseup', stopRecording);
+captionDisplay.addEventListener('click', () => {
+    captionDisplay.style.display = 'none';
+    showCaptionInput();
+});
+
 recordButton.addEventListener('touchstart', (e) => {
     e.preventDefault();
     startRecording();
 });
+
 recordButton.addEventListener('touchend', (e) => {
     e.preventDefault();
     stopRecording();
 });
 
+// For desktop testing
+recordButton.addEventListener('mousedown', startRecording);
+recordButton.addEventListener('mouseup', stopRecording);
+recordButton.addEventListener('mouseleave', stopRecording);
+
 shareButton.addEventListener('click', () => {
     if (navigator.share) {
-        const file = new File([finalGifBlob], "my_gif.gif", { type: "image/gif" });
-        navigator.share({
-            files: [file],
-            title: 'Check out my GIF!',
-            text: 'I made this GIF using the awesome GIF Creator app!'
-        }).then(() => console.log('Successful share'))
-          .catch((error) => console.log('Error sharing', error));
+        fetch(gifImg.src)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], "my_gif.gif", { type: "image/gif" });
+                navigator.share({
+                    files: [file],
+                    title: 'Check out my GIF!',
+                    text: captionInput.value || captionDisplay.textContent || 'I made this GIF using the awesome GIF Creator app!'
+                }).then(() => console.log('Successful share'))
+                    .catch((error) => console.log('Error sharing', error));
+            });
     } else {
         console.log('Web Share API not supported');
         alert('Sharing is not supported on this browser.');
@@ -175,6 +202,7 @@ closeButton.addEventListener('click', () => {
     closeButton.style.display = 'none';
     shareButton.style.display = 'none';
     recordButton.style.display = 'block';
+    flipButton.style.display = 'block';
     captionInput.style.display = 'none';
     captionInput.value = '';
     captionDisplay.style.display = 'none';
@@ -185,13 +213,6 @@ closeButton.addEventListener('click', () => {
 flipButton.addEventListener('click', () => {
     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
     setupCamera();
-});
-
-captionInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addCaptionToGIF();
-    }
 });
 
 setupCamera();
