@@ -54,6 +54,10 @@
         #record-button {
             background-color: #ff4d4d;
         }
+        #record-button.recording {
+            transform: scale(1.15);
+            background-color: rgba(255, 77, 77, 0.1);
+        }
         #share-button {
             display: none;
             background-color: #41C1EA;
@@ -64,17 +68,18 @@
         }
         #progress-ring {
             position: absolute;
-            top: -6px;
-            left: -6px;
+            top: -8px;
+            left: -8px;
             transform: rotate(-90deg);
         }
         #progress-ring circle {
-            stroke-dasharray: 238.76;
-            stroke-dashoffset: 238.76;
+            stroke-dasharray: 237.76;
+            stroke-dashoffset: 237.76;
             stroke: #ff4d4d;
-            stroke-width: 6px;
+            stroke-width: 8px;
             fill: transparent;
             transition: stroke-dashoffset 0.1s linear;
+            stroke-linecap: round;
         }
         #close-button, #flip-button {
             position: absolute;
@@ -110,8 +115,8 @@
         <button id="close-button"></button>
         <button id="flip-button"></button>
         <div class="button-container">
-            <svg id="progress-ring" width="88" height="88">
-                <circle r="38" cx="44" cy="44"/>
+            <svg id="progress-ring" width="92" height="92">
+                <circle r="38" cx="46" cy="46"/>
             </svg>
             <button id="record-button"></button>
             <button id="share-button"></button>
