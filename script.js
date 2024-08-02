@@ -1,9 +1,8 @@
 let videoStream;
+let mediaRecorder;
+let recordedChunks = [];
 let isRecording = false;
-let recordingStartTime;
 let currentFacingMode = 'user';
-let recordedFrames = [];
-const MAX_RECORDING_TIME = 3000; // 3 seconds in milliseconds
 
 const video = document.getElementById('video');
 const gifImg = document.getElementById('gif');
@@ -38,45 +37,40 @@ function initCamera() {
 }
 
 function startRecording() {
+    recordedChunks = [];
+    const options = { mimeType: 'video/webm;codecs=vp8,opus' };
+    try {
+        mediaRecorder = new MediaRecorder(videoStream, options);
+    } catch (e) {
+        console.error('MediaRecorder is not supported by this browser.');
+        return;
+    }
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        convertToGIF(blob);
+    };
+
+    mediaRecorder.start(100);
     isRecording = true;
-    recordingStartTime = Date.now();
-    recordedFrames = [];
-    captureFrame();
     recordButton.style.transform = 'scale(1.1)';
 }
 
 function stopRecording() {
-    isRecording = false;
-    recordButton.style.transform = 'scale(1)';
-    createGIF();
-}
-
-function captureFrame() {
-    if (!isRecording) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 320;
-    const ctx = canvas.getContext('2d');
-    
-    // Flip the image horizontally if using front camera
-    if (currentFacingMode === 'user') {
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
-    }
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    recordedFrames.push(canvas.toDataURL('image/jpeg', 0.5));
-
-    const elapsedTime = Date.now() - recordingStartTime;
-    if (elapsedTime < MAX_RECORDING_TIME) {
-        requestAnimationFrame(captureFrame);
-    } else {
-        stopRecording();
+    if (isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordButton.style.transform = 'scale(1)';
     }
 }
 
-function createGIF() {
+function convertToGIF(videoBlob) {
     const gif = new GIF({
         workers: 2,
         quality: 10,
@@ -85,16 +79,27 @@ function createGIF() {
         workerScript: './gif.worker.js'
     });
 
-    recordedFrames.forEach(frame => {
-        const img = new Image();
-        img.src = frame;
-        img.onload = () => {
-            gif.addFrame(img, { delay: 100 });
-            if (img.src === recordedFrames[recordedFrames.length - 1]) {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(videoBlob);
+    video.onloadeddata = () => {
+        video.play();
+        const canvas = document.createElement('canvas');
+        canvas.width = 320;
+        canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        
+        function addFrame() {
+            if (video.paused || video.ended) {
                 gif.render();
+                return;
             }
-        };
-    });
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            gif.addFrame(ctx, { copy: true, delay: 100 });
+            requestAnimationFrame(addFrame);
+        }
+
+        addFrame();
+    };
 
     gif.on('finished', (blob) => {
         const gifURL = URL.createObjectURL(blob);
