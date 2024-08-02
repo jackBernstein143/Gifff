@@ -1,111 +1,97 @@
-let videoStream;
-let mediaRecorder;
-let recordedChunks = [];
-let isRecording = false;
-let currentFacingMode = 'user';
-
-const video = document.getElementById('video');
+const videoElement = document.getElementById('video');
 const gifImg = document.getElementById('gif');
 const recordButton = document.getElementById('record-button');
 const shareButton = document.getElementById('share-button');
 const closeButton = document.getElementById('close-button');
 const flipButton = document.getElementById('flip-button');
+const canvas = document.getElementById('canvas');
 
-function initCamera() {
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-    }
+let isRecording = false;
+let recordingFrames = [];
+let recordingStartTime;
+const squareSize = 320;
+const maxRecordingTime = 3000; // 3 seconds in milliseconds
+let currentFacingMode = 'user';
 
-    const constraints = {
-        video: {
-            facingMode: currentFacingMode,
-            width: { ideal: 320 },
-            height: { ideal: 320 }
-        }
-    };
-
-    navigator.mediaDevices.getUserMedia(constraints)
-        .then(stream => {
-            videoStream = stream;
-            video.srcObject = stream;
-            video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-        })
-        .catch(error => {
-            console.error("Error accessing the camera", error);
-            alert('Unable to access the camera. Please ensure you have granted permission.');
+async function setupCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: currentFacingMode, width: { ideal: squareSize }, height: { ideal: squareSize } }
         });
+        videoElement.srcObject = stream;
+        await videoElement.play();
+        canvas.width = squareSize;
+        canvas.height = squareSize;
+        videoElement.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+    } catch (error) {
+        console.error(`Error accessing webcam: ${error}`);
+        alert('Unable to access the camera. Please ensure you have granted permission.');
+    }
 }
 
 function startRecording() {
-    recordedChunks = [];
-    const options = { mimeType: 'video/webm;codecs=vp8,opus' };
-    try {
-        mediaRecorder = new MediaRecorder(videoStream, options);
-    } catch (e) {
-        console.error('MediaRecorder is not supported by this browser.');
-        return;
-    }
-
-    mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-            recordedChunks.push(event.data);
-        }
-    };
-
-    mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        convertToGIF(blob);
-    };
-
-    mediaRecorder.start(100);
     isRecording = true;
+    recordingFrames = [];
+    recordingStartTime = Date.now();
     recordButton.style.transform = 'scale(1.1)';
+    captureFrame();
 }
 
 function stopRecording() {
-    if (isRecording) {
-        mediaRecorder.stop();
-        isRecording = false;
-        recordButton.style.transform = 'scale(1)';
+    isRecording = false;
+    recordButton.style.transform = 'scale(1)';
+    createGIF();
+}
+
+function captureFrame() {
+    if (!isRecording) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Flip the image horizontally if using front camera
+    if (currentFacingMode === 'user') {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElement, -squareSize, 0, squareSize, squareSize);
+        ctx.restore();
+    } else {
+        ctx.drawImage(videoElement, 0, 0, squareSize, squareSize);
+    }
+    
+    recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
+    
+    const elapsedTime = Date.now() - recordingStartTime;
+    if (elapsedTime < maxRecordingTime && recordingFrames.length < 50) {
+        requestAnimationFrame(captureFrame);
+    } else {
+        stopRecording();
     }
 }
 
-function convertToGIF(videoBlob) {
+function createGIF() {
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: 320,
-        height: 320,
+        width: squareSize,
+        height: squareSize,
         workerScript: './gif.worker.js'
     });
 
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(videoBlob);
-    video.onloadeddata = () => {
-        video.play();
-        const canvas = document.createElement('canvas');
-        canvas.width = 320;
-        canvas.height = 320;
-        const ctx = canvas.getContext('2d');
-        
-        function addFrame() {
-            if (video.paused || video.ended) {
+    recordingFrames.forEach((frame, index) => {
+        const img = new Image();
+        img.src = frame;
+        img.onload = () => {
+            gif.addFrame(img, { delay: 200 });
+            if (index === recordingFrames.length - 1) {
                 gif.render();
-                return;
             }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            gif.addFrame(ctx, { copy: true, delay: 100 });
-            requestAnimationFrame(addFrame);
-        }
-
-        addFrame();
-    };
+        };
+    });
 
     gif.on('finished', (blob) => {
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
-        video.style.display = 'none';
+        videoElement.style.display = 'none';
         closeButton.style.display = 'block';
         shareButton.style.display = 'block';
         recordButton.style.display = 'none';
@@ -148,17 +134,17 @@ shareButton.addEventListener('click', () => {
 
 closeButton.addEventListener('click', () => {
     gifImg.style.display = 'none';
-    video.style.display = 'block';
+    videoElement.style.display = 'block';
     closeButton.style.display = 'none';
     shareButton.style.display = 'none';
     recordButton.style.display = 'block';
     flipButton.style.display = 'block';
-    initCamera();
+    setupCamera();
 });
 
 flipButton.addEventListener('click', () => {
     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-    initCamera();
+    setupCamera();
 });
 
-initCamera();
+setupCamera();
