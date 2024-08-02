@@ -45,8 +45,7 @@ function startRecording() {
     if (isRecording) return;
     isRecording = true;
     recordingFrames = [];
-    recordButton.style.transform = 'scale(1.1)';
-    recordButton.style.backgroundColor = 'rgba(255, 77, 77, 0.1)';
+    recordButton.classList.add('recording');
     progressRing.style.display = 'block';
     recordingStartTime = Date.now();
     recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
@@ -59,8 +58,7 @@ function stopRecording() {
     isRecording = false;
     clearInterval(recordingInterval);
     clearTimeout(recordingTimeout);
-    recordButton.style.transform = 'scale(1)';
-    recordButton.style.backgroundColor = '#ff4d4d';
+    recordButton.classList.remove('recording');
     progressRing.style.display = 'none';
     setProgress(0);
     if (recordingFrames.length > 0) {
