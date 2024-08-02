@@ -156,7 +156,26 @@ function showCaptionInput() {
     captionInput.value = '';
     adjustInputWidth();
     captionInput.focus();
+    
+    // Move the GIF container up when the keyboard appears
+    document.body.style.height = 'calc(100% - 260px)'; // Adjust this value based on average keyboard height
+    document.querySelector('.container').style.marginTop = '-130px'; // Half of the keyboard height
 }
+
+function hideCaptionInput() {
+    captionInput.style.display = 'none';
+    captionInput.blur();
+    
+    // Reset the container position
+    document.body.style.height = '100%';
+    document.querySelector('.container').style.marginTop = '0';
+}
+
+captionInput.addEventListener('blur', () => {
+    if (!captionInput.value.trim()) {
+        hideCaptionInput();
+    }
+});
 
 captionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -169,9 +188,9 @@ function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
         captionDisplay.textContent = captionInput.value;
         captionDisplay.style.display = 'flex';
-        captionInput.style.display = 'none';
+        hideCaptionInput();
     } else {
-        captionInput.style.display = 'none';
+        hideCaptionInput();
     }
 }
 
@@ -229,8 +248,4 @@ closeButton.addEventListener('click', () => {
 });
 
 flipButton.addEventListener('click', () => {
-    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-    setupCamera();
-});
-
-setupCamera();
+    currentFacingMode = current
