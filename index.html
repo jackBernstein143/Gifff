@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video to GIF Converter</title>
+</head>
+
+<body>
+    <h1>Record Video and Create GIF</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <br>
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording" disabled>Stop Recording</button>
+    <br><br>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+    <br>
+    <img id="gif" alt="Generated GIF">
+    <br><br>
+    <a id="downloadLink" download="output.gif">Download GIF</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized@0.4.0/dist/gif.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
