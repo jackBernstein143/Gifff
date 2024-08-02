@@ -15,6 +15,7 @@ let recordedChunks = [];
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
         videoElement.srcObject = stream;
+        videoElement.play(); // Ensure the video element starts playing the stream
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (event) => {
@@ -28,6 +29,10 @@ navigator.mediaDevices.getUserMedia({ video: true })
             convertToGIF(superBuffer);
             recordedChunks = [];
         };
+    })
+    .catch(error => {
+        console.error('Error accessing webcam:', error);
+        alert('Unable to access the camera. Please ensure you have granted permission.');
     });
 
 startButton.addEventListener('click', () => {
