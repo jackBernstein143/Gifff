@@ -1,1 +1,1 @@
-# GIFExample
+# GifExample
