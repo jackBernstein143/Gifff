@@ -17,6 +17,7 @@ let recordingStartTime;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
+let finalGifBlob = null;
 
 const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
 progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -112,6 +113,7 @@ function createGIF() {
     });
 
     gif.on('finished', (blob) => {
+        finalGifBlob = blob;
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
@@ -136,7 +138,6 @@ captionInput.addEventListener('input', () => {
 });
 
 function adjustInputWidth() {
-    // Create a hidden span to measure text width
     const span = document.createElement('span');
     span.style.visibility = 'hidden';
     span.style.position = 'absolute';
@@ -144,14 +145,11 @@ function adjustInputWidth() {
     span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
-    // Set span content and get its width
     span.textContent = captionInput.value || captionInput.placeholder;
     const textWidth = span.offsetWidth;
 
-    // Remove the span
     document.body.removeChild(span);
 
-    // Set input width to match text (plus some padding)
     captionInput.style.width = `${Math.min(textWidth + 20, captionInput.parentElement.offsetWidth * 0.8)}px`;
 }
 
@@ -167,6 +165,7 @@ function finalizeCaptionInput() {
         captionDisplay.textContent = captionInput.value;
         captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
+        updateGIFWithCaption();
     } else {
         captionInput.style.display = 'none';
     }
@@ -177,55 +176,52 @@ captionDisplay.addEventListener('click', () => {
     showCaptionInput();
 });
 
-function createShareableGIF(originalGifBlob) {
-    return new Promise((resolve) => {
-        // Load the original GIF
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
+function updateGIFWithCaption() {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = squareSize;
+    tempCanvas.height = squareSize;
+    const ctx = tempCanvas.getContext('2d');
 
-            // Create a new GIF
-            const gif = new GIF({
-                workers: 2,
-                quality: 10,
-                width: canvas.width,
-                height: canvas.height,
-                workerScript: './gif.worker.js'
-            });
+    const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        width: squareSize,
+        height: squareSize,
+        workerScript: './gif.worker.js'
+    });
 
-            // Function to add frame with caption
-            function addFrameWithCaption() {
-                ctx.drawImage(img, 0, 0);
-                
-                // Add caption
-                const caption = captionInput.value || captionDisplay.textContent;
-                if (caption) {
-                    ctx.font = '20px Arial';
-                    ctx.fillStyle = 'white';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    ctx.fillText(caption, canvas.width / 2, canvas.height - 20);
-                }
-
-                gif.addFrame(ctx, {copy: true, delay: 100});
-
-                if (gif.frames.length < 30) { // Limit to 30 frames for performance
-                    setTimeout(addFrameWithCaption, 100);
-                } else {
-                    gif.render();
-                }
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const gifReader = new GIF.Reader(new Uint8Array(e.target.result));
+        gifReader.addEventListener('frame', (frame) => {
+            ctx.clearRect(0, 0, squareSize, squareSize);
+            ctx.drawImage(frame.image, 0, 0, squareSize, squareSize);
+            
+            // Add caption
+            const caption = captionInput.value || captionDisplay.textContent;
+            if (caption) {
+                ctx.font = '20px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(caption, squareSize / 2, squareSize - 20);
             }
 
-            addFrameWithCaption();
+            gif.addFrame(ctx, { copy: true, delay: frame.delay });
+        });
 
-            gif.on('finished', (blob) => {
-                resolve(blob);
-            });
-        };
-        img.src = URL.createObjectURL(originalGifBlob);
+        gifReader.addEventListener('end', () => {
+            gif.render();
+        });
+
+        gifReader.read();
+    };
+    reader.readAsArrayBuffer(finalGifBlob);
+
+    gif.on('finished', (blob) => {
+        finalGifBlob = blob;
+        const gifURL = URL.createObjectURL(blob);
+        gifImg.src = gifURL;
     });
 }
 
@@ -246,18 +242,13 @@ recordButton.addEventListener('mouseleave', stopRecording);
 
 shareButton.addEventListener('click', () => {
     if (navigator.share) {
-        fetch(gifImg.src)
-            .then(res => res.blob())
-            .then(createShareableGIF)
-            .then(shareableBlob => {
-                const file = new File([shareableBlob], "my_gif.gif", { type: "image/gif" });
-                navigator.share({
-                    files: [file],
-                    title: 'Check out my GIF!',
-                    text: 'I made this GIF using the awesome GIF Creator app!'
-                }).then(() => console.log('Successful share'))
-                  .catch((error) => console.log('Error sharing', error));
-            });
+        const file = new File([finalGifBlob], "my_gif.gif", { type: "image/gif" });
+        navigator.share({
+            files: [file],
+            title: 'Check out my GIF!',
+            text: 'I made this GIF using the awesome GIF Creator app!'
+        }).then(() => console.log('Successful share'))
+          .catch((error) => console.log('Error sharing', error));
     } else {
         console.log('Web Share API not supported');
         alert('Sharing is not supported on this browser.');
