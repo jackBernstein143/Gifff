@@ -5,18 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video to GIF Converter</title>
+    <style>
+        #videoContainer {
+            position: relative;
+            width: 320px;
+            height: 240px;
+        }
+
+        #video,
+        #gif {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #gif {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Record Video and Create GIF</h1>
-    <video id="video" width="320" height="240" autoplay></video>
+    <div id="videoContainer">
+        <video id="video" width="320" height="240" autoplay></video>
+        <img id="gif" alt="Generated GIF">
+    </div>
     <br>
     <button id="startRecording">Start Recording</button>
     <button id="stopRecording" disabled>Stop Recording</button>
     <br><br>
     <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
-    <br>
-    <img id="gif" alt="Generated GIF">
     <br><br>
     <a id="downloadLink" download="output.gif">Download GIF</a>
 
