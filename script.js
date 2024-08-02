@@ -7,27 +7,32 @@ const startButton = document.getElementById('startRecording');
 const stopButton = document.getElementById('stopRecording');
 const canvas = document.getElementById('canvas');
 const downloadLink = document.getElementById('downloadLink');
+const logElement = document.getElementById('log');
+
+function logMessage(message) {
+    console.log(message);
+    logElement.textContent += `${message}\n`;
+}
 
 let mediaRecorder;
 let recordedChunks = [];
 
-// Access webcam with mobile-friendly constraints
 navigator.mediaDevices.getUserMedia({
     video: {
-        facingMode: "user" // Use "environment" for rear camera
+        facingMode: "user"
     }
 })
     .then(stream => {
-        console.log('Stream obtained:', stream);
+        logMessage('Stream obtained');
         videoElement.srcObject = stream;
 
         videoElement.onloadedmetadata = () => {
-            console.log('Video metadata loaded');
+            logMessage('Video metadata loaded');
             videoElement.play();
         };
 
         videoElement.addEventListener('loadeddata', () => {
-            console.log('Video loadeddata event');
+            logMessage('Video loadeddata event');
         });
 
         mediaRecorder = new MediaRecorder(stream);
@@ -45,26 +50,26 @@ navigator.mediaDevices.getUserMedia({
         };
     })
     .catch(error => {
-        console.error('Error accessing webcam:', error);
+        logMessage(`Error accessing webcam: ${error}`);
         alert('Unable to access the camera. Please ensure you have granted permission.');
     });
 
 startButton.addEventListener('click', () => {
-    console.log('Recording started');
+    logMessage('Recording started');
     mediaRecorder.start();
     startButton.disabled = true;
     stopButton.disabled = false;
 });
 
 stopButton.addEventListener('click', () => {
-    console.log('Recording stopped');
+    logMessage('Recording stopped');
     mediaRecorder.stop();
     startButton.disabled = false;
     stopButton.disabled = true;
 });
 
 function convertToGIF(videoBlob) {
-    console.log('Converting to GIF...');
+    logMessage('Converting to GIF...');
     const gif = new GIF({
         workers: 2,
         quality: 10
@@ -76,6 +81,7 @@ function convertToGIF(videoBlob) {
     video.play();
 
     video.addEventListener('loadeddata', () => {
+        logMessage('Video for GIF loaded');
         const interval = setInterval(() => {
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
             gif.addFrame(canvas, { copy: true, delay: 100 });
@@ -83,12 +89,17 @@ function convertToGIF(videoBlob) {
 
         video.addEventListener('ended', () => {
             clearInterval(interval);
+            logMessage('Video for GIF ended');
             gif.render();
         });
     });
 
+    gif.on('progress', (progress) => {
+        logMessage(`GIF rendering progress: ${Math.round(progress * 100)}%`);
+    });
+
     gif.on('finished', (blob) => {
-        console.log('GIF rendering finished');
+        logMessage('GIF rendering finished');
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
