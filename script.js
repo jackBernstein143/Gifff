@@ -120,9 +120,47 @@ function createGIF() {
         shareButton.style.display = 'block';
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
-        captionInput.style.display = 'block'; // Show caption input after GIF is created
+        showCaptionInput();
     });
 }
+
+function showCaptionInput() {
+    captionInput.style.display = 'block';
+    captionInput.value = '';
+    adjustInputWidth();
+    captionInput.focus();
+}
+
+captionInput.addEventListener('input', () => {
+    adjustInputWidth();
+});
+
+function adjustInputWidth() {
+    captionInput.style.width = 'auto';
+    captionInput.style.width = Math.min(captionInput.scrollWidth, captionInput.parentElement.offsetWidth * 0.8) + 'px';
+}
+
+captionInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        finalizeCaptionInput();
+    }
+});
+
+function finalizeCaptionInput() {
+    if (captionInput.value.trim()) {
+        captionDisplay.textContent = captionInput.value;
+        captionDisplay.style.display = 'flex';
+        captionInput.style.display = 'none';
+    } else {
+        captionInput.style.display = 'none';
+    }
+}
+
+captionDisplay.addEventListener('click', () => {
+    captionDisplay.style.display = 'none';
+    showCaptionInput();
+});
 
 recordButton.addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -175,37 +213,6 @@ closeButton.addEventListener('click', () => {
 flipButton.addEventListener('click', () => {
     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
     setupCamera();
-});
-
-captionInput.addEventListener('input', () => {
-    adjustInputWidth();
-    if (captionInput.value) {
-        captionDisplay.textContent = captionInput.value;
-        captionDisplay.style.display = 'flex';
-        captionInput.style.display = 'none';
-    }
-});
-
-function adjustInputWidth() {
-    captionInput.style.width = 'auto';
-    captionInput.style.width = (captionInput.scrollWidth + 20) + 'px';
-}
-
-captionDisplay.addEventListener('click', () => {
-    captionDisplay.style.display = 'none';
-    captionInput.style.display = 'block';
-    captionInput.value = captionDisplay.textContent;
-    adjustInputWidth();
-    captionInput.focus();
-});
-
-// Prevent default form submission behavior
-document.addEventListener('submit', (e) => e.preventDefault());
-
-// Prevent keyboard from dismissing
-captionInput.addEventListener('blur', (e) => {
-    e.preventDefault();
-    captionInput.focus();
 });
 
 setupCamera();
