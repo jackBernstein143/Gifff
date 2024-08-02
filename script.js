@@ -8,7 +8,7 @@ const canvas = document.getElementById('canvas');
 
 let isRecording = false;
 let recordingFrames = [];
-let recordingStartTime;
+let recordingInterval;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
@@ -29,25 +29,32 @@ async function setupCamera() {
     }
 }
 
+function toggleRecording() {
+    if (!isRecording) {
+        startRecording();
+    } else {
+        stopRecording();
+    }
+}
+
 function startRecording() {
     isRecording = true;
     recordingFrames = [];
-    recordingStartTime = Date.now();
     recordButton.style.transform = 'scale(1.1)';
-    captureFrame();
+    recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
+    setTimeout(stopRecording, maxRecordingTime);
 }
 
 function stopRecording() {
+    if (!isRecording) return;
     isRecording = false;
+    clearInterval(recordingInterval);
     recordButton.style.transform = 'scale(1)';
     createGIF();
 }
 
 function captureFrame() {
-    if (!isRecording) return;
     const ctx = canvas.getContext('2d');
-    
-    // Flip the image horizontally if using front camera
     if (currentFacingMode === 'user') {
         ctx.save();
         ctx.scale(-1, 1);
@@ -56,15 +63,7 @@ function captureFrame() {
     } else {
         ctx.drawImage(videoElement, 0, 0, squareSize, squareSize);
     }
-    
     recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
-    
-    const elapsedTime = Date.now() - recordingStartTime;
-    if (elapsedTime < maxRecordingTime && recordingFrames.length < 50) {
-        requestAnimationFrame(captureFrame);
-    } else {
-        stopRecording();
-    }
 }
 
 function createGIF() {
@@ -99,19 +98,7 @@ function createGIF() {
     });
 }
 
-recordButton.addEventListener('mousedown', startRecording);
-recordButton.addEventListener('mouseup', stopRecording);
-recordButton.addEventListener('mouseleave', stopRecording);
-
-recordButton.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startRecording();
-});
-
-recordButton.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    stopRecording();
-});
+recordButton.addEventListener('click', toggleRecording);
 
 shareButton.addEventListener('click', () => {
     if (navigator.share) {
