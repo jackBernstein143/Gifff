@@ -2,12 +2,11 @@
 // import { GIF } from "./gif"
 
 const videoElement = document.getElementById('video');
+const gifImg = document.getElementById('gif');
 const startButton = document.getElementById('startRecording');
 const stopButton = document.getElementById('stopRecording');
 const canvas = document.getElementById('canvas');
-const gifImg = document.getElementById('gif');
 const downloadLink = document.getElementById('downloadLink');
-
 
 let mediaRecorder;
 let recordedChunks = [];
@@ -26,8 +25,6 @@ navigator.mediaDevices.getUserMedia({ video: true })
 
         mediaRecorder.onstop = () => {
             const superBuffer = new Blob(recordedChunks, { type: 'video/webm' });
-            console.log(superBuffer)
-            console.log(convertToGIF(superBuffer))
             convertToGIF(superBuffer);
             recordedChunks = [];
         };
@@ -46,7 +43,6 @@ stopButton.addEventListener('click', () => {
 });
 
 function convertToGIF(videoBlob) {
-
     const gif = new GIF({
         workers: 2,
         quality: 10
@@ -72,6 +68,8 @@ function convertToGIF(videoBlob) {
     gif.on('finished', (blob) => {
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
+        gifImg.style.display = 'block';
+        videoElement.style.display = 'none';
         downloadLink.href = gifURL;
     });
 }
