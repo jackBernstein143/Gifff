@@ -124,20 +124,38 @@ function createGIF() {
     });
 }
 
+function adjustInputWidth() {
+    const span = document.createElement('span');
+    span.style.visibility = 'hidden';
+    span.style.position = 'absolute';
+    span.style.whiteSpace = 'pre';
+    span.style.font = window.getComputedStyle(captionInput).font;
+    document.body.appendChild(span);
+
+    span.textContent = captionInput.value || captionInput.placeholder;
+    const textWidth = span.offsetWidth;
+
+    document.body.removeChild(span);
+
+    const paddingWidth = 20; // 10px padding on each side
+    const newWidth = Math.min(Math.max(textWidth + paddingWidth, 100), captionInput.parentElement.offsetWidth * 0.8);
+    captionInput.style.width = `${newWidth}px`;
+}
+
+captionInput.addEventListener('input', () => {
+    adjustInputWidth();
+    if (captionInput.value.trim()) {
+        captionInput.style.background = 'rgba(255, 255, 255, 0.85)';
+    } else {
+        captionInput.style.background = 'rgba(255, 255, 255, 0.50)';
+    }
+});
+
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
     adjustInputWidth();
     captionInput.focus();
-}
-
-captionInput.addEventListener('input', () => {
-    adjustInputWidth();
-});
-
-function adjustInputWidth() {
-    captionInput.style.width = '1px'; // Reset to minimum
-    captionInput.style.width = Math.min(captionInput.scrollWidth, captionInput.parentElement.offsetWidth * 0.8) + 'px';
 }
 
 captionInput.addEventListener('keydown', (e) => {
