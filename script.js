@@ -12,6 +12,7 @@ let recordingInterval;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
+let recordingTimeout;
 
 async function setupCamera() {
     try {
@@ -29,28 +30,24 @@ async function setupCamera() {
     }
 }
 
-function toggleRecording() {
-    if (!isRecording) {
-        startRecording();
-    } else {
-        stopRecording();
-    }
-}
-
 function startRecording() {
+    if (isRecording) return;
     isRecording = true;
     recordingFrames = [];
     recordButton.style.transform = 'translateX(-50%) scale(1.1)';
     recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
-    setTimeout(stopRecording, maxRecordingTime);
+    recordingTimeout = setTimeout(stopRecording, maxRecordingTime);
 }
 
 function stopRecording() {
     if (!isRecording) return;
     isRecording = false;
     clearInterval(recordingInterval);
+    clearTimeout(recordingTimeout);
     recordButton.style.transform = 'translateX(-50%) scale(1)';
-    createGIF();
+    if (recordingFrames.length > 0) {
+        createGIF();
+    }
 }
 
 function captureFrame() {
@@ -98,7 +95,20 @@ function createGIF() {
     });
 }
 
-recordButton.addEventListener('click', toggleRecording);
+recordButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startRecording();
+});
+
+recordButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    stopRecording();
+});
+
+// For desktop testing
+recordButton.addEventListener('mousedown', startRecording);
+recordButton.addEventListener('mouseup', stopRecording);
+recordButton.addEventListener('mouseleave', stopRecording);
 
 shareButton.addEventListener('click', () => {
     if (navigator.share) {
