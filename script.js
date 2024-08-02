@@ -10,7 +10,7 @@ const logElement = document.getElementById('log');
 
 let isRecording = false;
 let recordingFrames = [];
-let videoWidth, videoHeight;
+let videoWidth, videoHeight, squareSize;
 
 function logMessage(message) {
     console.log(message);
@@ -32,11 +32,15 @@ async function setupCamera() {
         videoWidth = videoElement.videoWidth;
         videoHeight = videoElement.videoHeight;
 
-        // Set canvas dimensions to match video
-        canvas.width = videoWidth;
-        canvas.height = videoHeight;
+        // Calculate the size of the square
+        squareSize = Math.min(videoWidth, videoHeight);
+
+        // Set canvas dimensions to the square size
+        canvas.width = squareSize;
+        canvas.height = squareSize;
 
         logMessage(`Video dimensions: ${videoWidth}x${videoHeight}`);
+        logMessage(`Square size: ${squareSize}x${squareSize}`);
     } catch (error) {
         logMessage(`Error accessing webcam: ${error}`);
         alert('Unable to access the camera. Please ensure you have granted permission.');
@@ -69,7 +73,11 @@ function stopRecording() {
 function captureFrame() {
     if (!isRecording) return;
 
-    canvas.getContext('2d').drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+    const ctx = canvas.getContext('2d');
+    const xOffset = (videoWidth - squareSize) / 2;
+    const yOffset = (videoHeight - squareSize) / 2;
+
+    ctx.drawImage(videoElement, xOffset, yOffset, squareSize, squareSize, 0, 0, squareSize, squareSize);
     recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
 
     if (recordingFrames.length < 50) {  // Limit to 50 frames
@@ -84,8 +92,8 @@ function createGIF() {
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: videoWidth,
-        height: videoHeight,
+        width: squareSize,
+        height: squareSize,
         workerScript: './gif.worker.js'
     });
 
