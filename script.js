@@ -120,7 +120,7 @@ function createGIF() {
         shareButton.style.display = 'block';
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
-        captionInput.style.display = 'block';
+        captionInput.style.display = 'flex'; // Show caption input after GIF is created
     });
 }
 
@@ -148,7 +148,7 @@ shareButton.addEventListener('click', () => {
                 navigator.share({
                     files: [file],
                     title: 'Check out my GIF!',
-                    text: captionInput.value || 'I made this GIF using the awesome GIF Creator app!'
+                    text: captionInput.value || captionDisplay.textContent || 'I made this GIF using the awesome GIF Creator app!'
                 }).then(() => console.log('Successful share'))
                     .catch((error) => console.log('Error sharing', error));
             });
@@ -168,6 +168,7 @@ closeButton.addEventListener('click', () => {
     captionInput.style.display = 'none';
     captionInput.value = '';
     captionDisplay.style.display = 'none';
+    captionDisplay.textContent = '';
     setupCamera();
 });
 
@@ -179,18 +180,19 @@ flipButton.addEventListener('click', () => {
 captionInput.addEventListener('input', () => {
     if (captionInput.value) {
         captionDisplay.textContent = captionInput.value;
-        captionDisplay.style.display = 'inline-flex';
+        captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
-    } else {
-        captionDisplay.style.display = 'none';
-        captionInput.style.display = 'block';
     }
 });
 
 captionDisplay.addEventListener('click', () => {
     captionDisplay.style.display = 'none';
-    captionInput.style.display = 'block';
+    captionInput.style.display = 'flex';
+    captionInput.value = captionDisplay.textContent;
     captionInput.focus();
 });
+
+// Prevent default form submission behavior
+document.addEventListener('submit', (e) => e.preventDefault());
 
 setupCamera();
