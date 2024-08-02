@@ -122,10 +122,15 @@
             text-align: center;
             transition: all 0.3s ease;
             color: black;
+            min-width: 100px;
+            max-width: 80%;
         }
         #caption-input:focus {
             outline: none;
-            background: #FFF;
+            background: rgba(255, 255, 255, 0.85);
+        }
+        #caption-input::placeholder {
+            color: rgba(0, 0, 0, 0.5);
         }
         #caption-display {
             position: absolute;
