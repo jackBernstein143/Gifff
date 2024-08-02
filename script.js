@@ -1,4 +1,4 @@
-import GIF from "./node_modules/gif.js.optimized";
+import GIF from "./node_modules/gif.js.optimized/dist/gif";
 
 const videoElement = document.getElementById('video');
 const startButton = document.getElementById('startRecording');
