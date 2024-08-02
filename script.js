@@ -1,3 +1,5 @@
+import GIF from "./node_modules/gif.js.optimized";
+
 const videoElement = document.getElementById('video');
 const startButton = document.getElementById('startRecording');
 const stopButton = document.getElementById('stopRecording');
