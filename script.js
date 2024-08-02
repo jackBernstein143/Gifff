@@ -1,95 +1,169 @@
 // // @ts-ignore
 // import { GIF } from "./gif"
 
-const videoElement = document.getElementById('video');
-const gifImg = document.getElementById('gif');
-const startButton = document.getElementById('startRecording');
-const canvas = document.getElementById('canvas');
-const downloadLink = document.getElementById('downloadLink');
-
+let videoStream;
+let mediaRecorder;
+let recordedChunks = [];
 let isRecording = false;
-let recordingFrames = [];
-const squareSize = 320;
-
-async function setupCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: squareSize }, height: { ideal: squareSize } }
-        });
-        videoElement.srcObject = stream;
-        await videoElement.play();
-
-        canvas.width = squareSize;
-        canvas.height = squareSize;
-    } catch (error) {
-        console.error(`Error accessing webcam: ${error}`);
-        alert('Unable to access the camera. Please ensure you have granted permission.');
-    }
-}
-
-startButton.addEventListener('click', () => {
-    if (!isRecording) {
-        startRecording();
-    } else {
-        stopRecording();
-    }
+let currentFacingMode = 'user';
+const gif = new GIF({
+    workers: 2,
+    quality: 10,
+    width: 320,
+    height: 320,
+    workerScript: './gif.worker.js'
 });
 
+const video = document.getElementById('video');
+const gifImg = document.getElementById('gif');
+const recordButton = document.getElementById('record-button');
+const shareButton = document.getElementById('share-button');
+const closeButton = document.getElementById('close-button');
+const flipButton = document.getElementById('flip-button');
+
+function initCamera() {
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+    }
+
+    const constraints = {
+        video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 320 },
+            height: { ideal: 320 }
+        }
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            videoStream = stream;
+            video.srcObject = stream;
+            video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        })
+        .catch(error => {
+            console.error("Error accessing the camera", error);
+            alert('Unable to access the camera. Please ensure you have granted permission.');
+        });
+}
+
 function startRecording() {
+    recordedChunks = [];
+    const options = { mimeType: 'video/webm' };
+    try {
+        mediaRecorder = new MediaRecorder(videoStream, options);
+    } catch (e) {
+        console.error('MediaRecorder is not supported by this browser.');
+        return;
+    }
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+        }
+    };
+
+    mediaRecorder.start(100);
     isRecording = true;
-    recordingFrames = [];
-    startButton.textContent = 'Stop Recording';
-    captureFrame();
 }
 
 function stopRecording() {
+    mediaRecorder.stop();
     isRecording = false;
-    startButton.textContent = 'Start Recording';
-    createGIF();
+    setTimeout(() => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        convertToGIF(blob);
+    }, 100);
 }
 
-function captureFrame() {
-    if (!isRecording) return;
-
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoElement, 0, 0, squareSize, squareSize);
-    recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
-
-    if (recordingFrames.length < 50) {  // Limit to 50 frames
-        setTimeout(captureFrame, 200);  // Capture a frame every 200ms
-    } else {
-        stopRecording();
-    }
-}
-
-function createGIF() {
-    const gif = new GIF({
-        workers: 2,
-        quality: 10,
-        width: squareSize,
-        height: squareSize,
-        workerScript: './gif.worker.js'
-    });
-
-    recordingFrames.forEach((frame, index) => {
-        const img = new Image();
-        img.src = frame;
-        img.onload = () => {
-            gif.addFrame(img, { delay: 200 });
-            if (index === recordingFrames.length - 1) {
+function convertToGIF(videoBlob) {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(videoBlob);
+    video.onloadeddata = () => {
+        video.play();
+        const canvas = document.createElement('canvas');
+        canvas.width = 320;
+        canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        
+        function addFrame() {
+            if (video.paused || video.ended) {
                 gif.render();
+                return;
             }
-        };
-    });
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            gif.addFrame(ctx, { copy: true, delay: 100 });
+            requestAnimationFrame(addFrame);
+        }
+
+        addFrame();
+    };
 
     gif.on('finished', (blob) => {
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
-        videoElement.style.display = 'none';
-        downloadLink.href = gifURL;
-        downloadLink.style.display = 'inline';
+        video.style.display = 'none';
+        closeButton.style.display = 'block';
+        shareButton.style.display = 'block';
+        recordButton.style.display = 'none';
+        flipButton.style.display = 'none';
     });
 }
 
-setupCamera();
+recordButton.addEventListener('mousedown', () => {
+    startRecording();
+    recordButton.style.transform = 'scale(1.1)';
+});
+
+recordButton.addEventListener('mouseup', () => {
+    stopRecording();
+    recordButton.style.transform = 'scale(1)';
+});
+
+recordButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startRecording();
+    recordButton.style.transform = 'scale(1.1)';
+});
+
+recordButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    stopRecording();
+    recordButton.style.transform = 'scale(1)';
+});
+
+shareButton.addEventListener('click', () => {
+    if (navigator.share) {
+        fetch(gifImg.src)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], "my_gif.gif", { type: "image/gif" });
+                navigator.share({
+                    files: [file],
+                    title: 'Check out my GIF!',
+                    text: 'I made this GIF using the awesome GIF Creator app!'
+                }).then(() => console.log('Successful share'))
+                    .catch((error) => console.log('Error sharing', error));
+            });
+    } else {
+        console.log('Web Share API not supported');
+        alert('Sharing is not supported on this browser.');
+    }
+});
+
+closeButton.addEventListener('click', () => {
+    gifImg.style.display = 'none';
+    video.style.display = 'block';
+    closeButton.style.display = 'none';
+    shareButton.style.display = 'none';
+    recordButton.style.display = 'block';
+    flipButton.style.display = 'block';
+    initCamera();
+});
+
+flipButton.addEventListener('click', () => {
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    initCamera();
+});
+
+initCamera();
