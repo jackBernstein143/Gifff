@@ -5,14 +5,20 @@ const shareButton = document.getElementById('share-button');
 const closeButton = document.getElementById('close-button');
 const flipButton = document.getElementById('flip-button');
 const canvas = document.getElementById('canvas');
+const progressRing = document.querySelector('#progress-ring circle');
 
 let isRecording = false;
 let recordingFrames = [];
 let recordingInterval;
+let recordingTimeout;
+let recordingStartTime;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
-let recordingTimeout;
+
+const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
+progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+progressRing.style.strokeDashoffset = circumference;
 
 async function setupCamera() {
     try {
@@ -30,13 +36,22 @@ async function setupCamera() {
     }
 }
 
+function setProgress(percent) {
+    const offset = circumference - percent / 100 * circumference;
+    progressRing.style.strokeDashoffset = offset;
+}
+
 function startRecording() {
     if (isRecording) return;
     isRecording = true;
     recordingFrames = [];
-    recordButton.style.transform = 'translateX(-50%) scale(1.1)';
+    recordButton.style.transform = 'scale(1.1)';
+    recordButton.style.backgroundColor = 'rgba(255, 77, 77, 0.1)';
+    progressRing.style.display = 'block';
+    recordingStartTime = Date.now();
     recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
     recordingTimeout = setTimeout(stopRecording, maxRecordingTime);
+    requestAnimationFrame(updateProgress);
 }
 
 function stopRecording() {
@@ -44,9 +59,22 @@ function stopRecording() {
     isRecording = false;
     clearInterval(recordingInterval);
     clearTimeout(recordingTimeout);
-    recordButton.style.transform = 'translateX(-50%) scale(1)';
+    recordButton.style.transform = 'scale(1)';
+    recordButton.style.backgroundColor = '#ff4d4d';
+    progressRing.style.display = 'none';
+    setProgress(0);
     if (recordingFrames.length > 0) {
         createGIF();
+    }
+}
+
+function updateProgress() {
+    if (!isRecording) return;
+    const elapsedTime = Date.now() - recordingStartTime;
+    const progress = (elapsedTime / maxRecordingTime) * 100;
+    setProgress(progress);
+    if (progress < 100) {
+        requestAnimationFrame(updateProgress);
     }
 }
 
