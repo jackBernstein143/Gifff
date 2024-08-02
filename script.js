@@ -190,33 +190,33 @@ function updateGIFWithCaption() {
         workerScript: './gif.worker.js'
     });
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const gifReader = new GIF.Reader(new Uint8Array(e.target.result));
-        gifReader.addEventListener('frame', (frame) => {
-            ctx.clearRect(0, 0, squareSize, squareSize);
-            ctx.drawImage(frame.image, 0, 0, squareSize, squareSize);
-            
-            // Add caption
-            const caption = captionInput.value || captionDisplay.textContent;
-            if (caption) {
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(caption, squareSize / 2, squareSize - 20);
-            }
+    // Function to add caption to a frame
+    function addCaptionToFrame(frame) {
+        ctx.drawImage(frame, 0, 0, squareSize, squareSize);
+        
+        const caption = captionInput.value || captionDisplay.textContent;
+        if (caption) {
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(caption, squareSize / 2, squareSize - 20);
+        }
 
-            gif.addFrame(ctx, { copy: true, delay: frame.delay });
-        });
+        return ctx.getImageData(0, 0, squareSize, squareSize);
+    }
 
-        gifReader.addEventListener('end', () => {
-            gif.render();
-        });
+    // Read the original GIF and add caption to each frame
+    const reader = new GIF.Reader(new Uint8Array(finalGifBlob));
+    reader.addEventListener('frame', (frame) => {
+        gif.addFrame(addCaptionToFrame(frame.image), { delay: frame.delay });
+    });
 
-        gifReader.read();
-    };
-    reader.readAsArrayBuffer(finalGifBlob);
+    reader.addEventListener('end', () => {
+        gif.render();
+    });
+
+    reader.read();
 
     gif.on('finished', (blob) => {
         finalGifBlob = blob;
