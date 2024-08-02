@@ -4,7 +4,6 @@
 const videoElement = document.getElementById('video');
 const gifImg = document.getElementById('gif');
 const startButton = document.getElementById('startRecording');
-const stopButton = document.getElementById('stopRecording');
 const canvas = document.getElementById('canvas');
 const downloadLink = document.getElementById('downloadLink');
 const logElement = document.getElementById('log');
@@ -18,10 +17,11 @@ function logMessage(message) {
 let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
+let stream;
 
 async function setupCamera() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "user", width: 320, height: 240 }
         });
         logMessage('Stream obtained');
@@ -29,14 +29,16 @@ async function setupCamera() {
         await videoElement.play();
         logMessage('Video started playing');
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+        const mimeType = getSupportedMimeType();
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        
         mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
             }
         };
         mediaRecorder.onstop = () => {
-            const superBuffer = new Blob(recordedChunks, { type: 'video/webm' });
+            const superBuffer = new Blob(recordedChunks, { type: mimeType });
             convertToGIF(superBuffer);
             recordedChunks = [];
         };
@@ -46,10 +48,27 @@ async function setupCamera() {
     }
 }
 
+function getSupportedMimeType() {
+    const types = [
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=h264,opus',
+        'video/mp4;codecs=h264,aac',
+    ];
+
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+            return type;
+        }
+    }
+
+    return '';
+}
+
 startButton.addEventListener('click', () => {
     if (!isRecording) {
         logMessage('Recording started');
-        mediaRecorder.start(100);  // Capture data every 100ms
+        mediaRecorder.start(1000);  // Capture data every 1000ms
         isRecording = true;
         startButton.textContent = 'Stop Recording';
     } else {
@@ -76,14 +95,15 @@ async function convertToGIF(videoBlob) {
 
     const context = canvas.getContext('2d');
     const frameCaptureInterval = 200;  // Capture a frame every 200ms
-    const maxDuration = 5000;  // Limit to 5 seconds
-    const startTime = Date.now();
+    const maxFrames = 50;  // Limit to 50 frames (10 seconds at 5 FPS)
+    let frameCount = 0;
 
-    while (video.currentTime < video.duration && Date.now() - startTime < maxDuration) {
+    while (video.currentTime < video.duration && frameCount < maxFrames) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         gif.addFrame(context, { copy: true, delay: frameCaptureInterval });
         await new Promise(resolve => setTimeout(resolve, frameCaptureInterval));
         await video.play();  // Ensure video keeps playing
+        frameCount++;
     }
 
     logMessage('Frames captured, rendering GIF...');
