@@ -156,24 +156,7 @@ function showCaptionInput() {
     captionInput.value = '';
     adjustInputWidth();
     captionInput.focus();
-    
-    // Adjust the container position when the keyboard appears
-    document.querySelector('.container').style.transform = 'translateY(-130px)';
 }
-
-function hideCaptionInput() {
-    captionInput.style.display = 'none';
-    captionInput.blur();
-    
-    // Reset the container position
-    document.querySelector('.container').style.transform = 'translateY(0)';
-}
-
-captionInput.addEventListener('blur', () => {
-    if (!captionInput.value.trim()) {
-        hideCaptionInput();
-    }
-});
 
 captionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -186,9 +169,9 @@ function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
         captionDisplay.textContent = captionInput.value;
         captionDisplay.style.display = 'flex';
-        hideCaptionInput();
+        captionInput.style.display = 'none';
     } else {
-        hideCaptionInput();
+        captionInput.style.display = 'none';
     }
 }
 
@@ -250,5 +233,4 @@ flipButton.addEventListener('click', () => {
     setupCamera();
 });
 
-window.addEventListener('resize', () => {
-    if (document.activeElement
+setupCamera();
