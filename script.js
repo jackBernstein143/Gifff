@@ -72,7 +72,8 @@ function convertToGIF(videoBlob) {
     logMessage('Converting to GIF...');
     const gif = new GIF({
         workers: 2,
-        quality: 10
+        quality: 10,
+        workerScript: './gif.worker.js'  // Ensure the correct path to gif.worker.js
     });
 
     const url = URL.createObjectURL(videoBlob);
@@ -83,14 +84,22 @@ function convertToGIF(videoBlob) {
     video.addEventListener('loadeddata', () => {
         logMessage('Video for GIF loaded');
         const interval = setInterval(() => {
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            gif.addFrame(canvas, { copy: true, delay: 100 });
+            try {
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                gif.addFrame(canvas, { copy: true, delay: 100 });
+            } catch (error) {
+                logMessage(`Error adding frame: ${error}`);
+            }
         }, 100);
 
         video.addEventListener('ended', () => {
             clearInterval(interval);
             logMessage('Video for GIF ended');
-            gif.render();
+            try {
+                gif.render();
+            } catch (error) {
+                logMessage(`Error rendering GIF: ${error}`);
+            }
         });
     });
 
@@ -105,5 +114,13 @@ function convertToGIF(videoBlob) {
         gifImg.style.display = 'block';
         videoElement.style.display = 'none';
         downloadLink.href = gifURL;
+    });
+
+    gif.on('abort', () => {
+        logMessage('GIF rendering aborted');
+    });
+
+    gif.on('error', (error) => {
+        logMessage(`GIF rendering error: ${error}`);
     });
 }
