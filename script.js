@@ -1,4 +1,5 @@
-import GIF from "./node_modules/gif.js.optimized/dist/gif"
+// // @ts-ignore
+// import { GIF } from "./gif"
 
 const videoElement = document.getElementById('video');
 const startButton = document.getElementById('startRecording');
