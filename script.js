@@ -6,6 +6,8 @@ const closeButton = document.getElementById('close-button');
 const flipButton = document.getElementById('flip-button');
 const canvas = document.getElementById('canvas');
 const progressRing = document.querySelector('#progress-ring circle');
+const captionInput = document.getElementById('caption-input');
+const captionDisplay = document.getElementById('caption-display');
 
 let isRecording = false;
 let recordingFrames = [];
@@ -118,6 +120,7 @@ function createGIF() {
         shareButton.style.display = 'block';
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
+        captionInput.style.display = 'block';
     });
 }
 
@@ -145,7 +148,7 @@ shareButton.addEventListener('click', () => {
                 navigator.share({
                     files: [file],
                     title: 'Check out my GIF!',
-                    text: 'I made this GIF using the awesome GIF Creator app!'
+                    text: captionInput.value || 'I made this GIF using the awesome GIF Creator app!'
                 }).then(() => console.log('Successful share'))
                     .catch((error) => console.log('Error sharing', error));
             });
@@ -162,12 +165,32 @@ closeButton.addEventListener('click', () => {
     shareButton.style.display = 'none';
     recordButton.style.display = 'block';
     flipButton.style.display = 'block';
+    captionInput.style.display = 'none';
+    captionInput.value = '';
+    captionDisplay.style.display = 'none';
     setupCamera();
 });
 
 flipButton.addEventListener('click', () => {
     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
     setupCamera();
+});
+
+captionInput.addEventListener('input', () => {
+    if (captionInput.value) {
+        captionDisplay.textContent = captionInput.value;
+        captionDisplay.style.display = 'inline-flex';
+        captionInput.style.display = 'none';
+    } else {
+        captionDisplay.style.display = 'none';
+        captionInput.style.display = 'block';
+    }
+});
+
+captionDisplay.addEventListener('click', () => {
+    captionDisplay.style.display = 'none';
+    captionInput.style.display = 'block';
+    captionInput.focus();
 });
 
 setupCamera();
