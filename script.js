@@ -40,7 +40,7 @@ function toggleRecording() {
 function startRecording() {
     isRecording = true;
     recordingFrames = [];
-    recordButton.style.transform = 'scale(1.1)';
+    recordButton.style.transform = 'translateX(-50%) scale(1.1)';
     recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
     setTimeout(stopRecording, maxRecordingTime);
 }
@@ -49,7 +49,7 @@ function stopRecording() {
     if (!isRecording) return;
     isRecording = false;
     clearInterval(recordingInterval);
-    recordButton.style.transform = 'scale(1)';
+    recordButton.style.transform = 'translateX(-50%) scale(1)';
     createGIF();
 }
 
