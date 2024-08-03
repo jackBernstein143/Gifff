@@ -32,10 +32,31 @@ async function setupCamera() {
         canvas.width = squareSize;
         canvas.height = squareSize;
         videoElement.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        
+        // Start typewriter effect after camera is set up
+        startTypewriterEffect();
     } catch (error) {
         console.error(`Error accessing webcam: ${error}`);
         alert('Unable to access the camera. Please ensure you have granted permission.');
     }
+}
+
+function startTypewriterEffect() {
+    const text = "hold to record your gifff 🎬";
+    const textElement = document.querySelector('.instruction .text');
+    let index = 0;
+
+    textElement.style.opacity = 1; // Make text visible
+
+    function typeWriter() {
+        if (index < text.length) {
+            textElement.innerHTML += text.charAt(index);
+            index++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+
+    typeWriter();
 }
 
 function setProgress(percent) {
@@ -308,23 +329,6 @@ closeButton.addEventListener('click', () => {
 flipButton.addEventListener('click', () => {
     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
     setupCamera();
-});
-
-// Typewriter effect for instruction text
-document.addEventListener('DOMContentLoaded', () => {
-    const text = "hold to record your gifff 🎬";
-    const textElement = document.querySelector('.instruction .text');
-    let index = 0;
-
-    function typeWriter() {
-        if (index < text.length) {
-            textElement.innerHTML += text.charAt(index);
-            index++;
-            setTimeout(typeWriter, 50); // Adjust the speed here (lower number = faster)
-        }
-    }
-
-    typeWriter();
 });
 
 setupCamera();
