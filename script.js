@@ -150,6 +150,11 @@ function adjustInputWidth() {
 
 captionInput.addEventListener('input', () => {
     requestAnimationFrame(adjustInputWidth);
+    if (captionInput.value.length === 0) {
+        captionInput.style.textAlign = 'center';
+    } else {
+        captionInput.style.textAlign = 'left';
+    }
 });
 
 function setInitialCursorPosition() {
@@ -161,6 +166,7 @@ function setInitialCursorPosition() {
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
+    captionInput.style.textAlign = 'center';
     adjustInputWidth();
     captionInput.focus();
     setInitialCursorPosition();
