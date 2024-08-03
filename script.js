@@ -92,11 +92,14 @@ function captureFrame() {
 }
 
 function createGIF(withCaption = false) {
+    const scaleFactor = 2; // Increase this for higher resolution
+    const gifSize = squareSize * scaleFactor;
+
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: squareSize,
-        height: squareSize,
+        width: gifSize,
+        height: gifSize,
         workerScript: './gif.worker.js'
     });
 
@@ -105,21 +108,25 @@ function createGIF(withCaption = false) {
         img.src = frame;
         img.onload = () => {
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = squareSize;
-            tempCanvas.height = squareSize;
+            tempCanvas.width = gifSize;
+            tempCanvas.height = gifSize;
             const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, squareSize, squareSize);
+            ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (withCaption) {
                 const caption = captionInput.value || captionDisplay.textContent || '';
-                ctx.font = '16px Arial';
-                ctx.fillStyle = 'white';
+                
+                // Draw semi-transparent background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                const bgHeight = 32 * scaleFactor;
+                ctx.fillRect(0, gifSize - bgHeight, gifSize, bgHeight);
+
+                // Draw text
+                ctx.font = `bold ${16 * scaleFactor}px Arial`;
+                ctx.fillStyle = 'black';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                ctx.strokeText(caption, squareSize / 2, squareSize - 16);
-                ctx.fillText(caption, squareSize / 2, squareSize - 16);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(caption, gifSize / 2, gifSize - bgHeight / 2);
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
@@ -134,6 +141,8 @@ function createGIF(withCaption = false) {
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
+        gifImg.style.width = `${squareSize}px`; // Scale down for display
+        gifImg.style.height = `${squareSize}px`;
         videoElement.style.display = 'none';
         closeButton.style.display = 'block';
         shareButton.style.display = 'block';
@@ -142,7 +151,6 @@ function createGIF(withCaption = false) {
         showCaptionInput();
 
         if (withCaption) {
-            // If we're creating a GIF with caption for sharing, trigger the share
             shareGIF(blob);
         }
     });
