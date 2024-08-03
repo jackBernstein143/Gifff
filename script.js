@@ -231,12 +231,32 @@ function createGIFForSharing(caption) {
             if (caption) {
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillStyle = 'white';
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                ctx.strokeText(caption, squareSize / 2, squareSize - 10);
-                ctx.fillText(caption, squareSize / 2, squareSize - 10);
+                ctx.textBaseline = 'middle';
+
+                const padding = 8;
+                const textMetrics = ctx.measureText(caption);
+                const textWidth = textMetrics.width;
+                const textHeight = 16; // Approximation of text height
+                const bgWidth = Math.min(textWidth + (padding * 2), squareSize - (padding * 2));
+                const bgHeight = textHeight + (padding * 2);
+                const bgRadius = Math.min(50, bgHeight / 2);
+                const bgY = squareSize - 16 - bgHeight; // 16px from bottom
+                const bgX = (squareSize - bgWidth) / 2;
+
+                // Draw rounded rectangle background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.moveTo(bgX + bgRadius, bgY);
+                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
+                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(caption, squareSize / 2, bgY + (bgHeight / 2));
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
