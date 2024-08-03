@@ -119,11 +119,11 @@
             background: rgba(255, 255, 255, 0.50);
             backdrop-filter: blur(6px);
             font-size: 16px;
-            text-align: left;
-            transition: all 0.3s ease;
+            text-align: center;
             color: black;
-            min-width: 0;
+            min-width: 32px;
             width: auto;
+            transition: background 0.3s ease;
         }
         #caption-input:focus {
             outline: none;
@@ -131,6 +131,7 @@
         }
         #caption-input::placeholder {
             color: rgba(0, 0, 0, 0.5);
+            text-align: center;
         }
         #caption-display {
             position: absolute;
