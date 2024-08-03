@@ -134,7 +134,7 @@ function adjustInputWidth() {
     span.style.visibility = 'hidden';
     span.style.position = 'absolute';
     span.style.whiteSpace = 'pre';
-    span.style.font = window.getComputedStyle(captionInput).font;
+    span.style.font = getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
     span.textContent = captionInput.value || captionInput.placeholder;
@@ -202,7 +202,7 @@ function measureText(text) {
 
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        const maxWidth = squareSize - 32; // 16px padding on each side
+        const maxWidth = squareSize - 64; // 32px padding on each side
         const lines = wrapText(captionInput.value, maxWidth);
         captionDisplay.innerHTML = lines.join('<br>');
         captionDisplay.style.display = 'flex';
@@ -264,17 +264,17 @@ function createGIFForSharing(caption) {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const padding = 16 * scaleFactor; // Increased horizontal padding
+                const padding = 32 * scaleFactor; // Increased horizontal padding
                 const maxWidth = gifSize - (padding * 2);
                 const lines = wrapText(caption, maxWidth / scaleFactor).map(line => line.trim());
                 
                 const lineHeight = 20 * scaleFactor;
                 const textHeight = lineHeight * lines.length;
-                const bgHeight = textHeight + (padding * 2);
-                const bgWidth = gifSize - (padding * 2);
+                const bgHeight = textHeight + (padding);
+                const bgWidth = gifSize - (padding);
                 const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
                 const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
-                const bgX = padding;
+                const bgX = padding / 2;
 
                 // Draw rounded rectangle background
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
