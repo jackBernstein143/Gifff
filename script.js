@@ -116,17 +116,38 @@ function createGIF(withCaption = false) {
             if (withCaption) {
                 const caption = captionInput.value || captionDisplay.textContent || '';
                 
-                // Draw semi-transparent background
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                const bgHeight = 32 * scaleFactor;
-                ctx.fillRect(0, gifSize - bgHeight, gifSize, bgHeight);
-
-                // Draw text
-                ctx.font = `bold ${16 * scaleFactor}px Arial`;
-                ctx.fillStyle = 'black';
+                // Set up text properties
+                ctx.font = `${16 * scaleFactor}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(caption, gifSize / 2, gifSize - bgHeight / 2);
+
+                // Measure text
+                const textMetrics = ctx.measureText(caption);
+                const textWidth = textMetrics.width;
+                const textHeight = 16 * scaleFactor; // Approximation of text height
+
+                // Calculate background dimensions
+                const padding = 8 * scaleFactor;
+                const bgWidth = textWidth + (padding * 2);
+                const bgHeight = textHeight + (padding * 2);
+                const bgRadius = 100 * scaleFactor / 2; // 100px diameter = 50px radius
+                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
+                const bgX = (gifSize - bgWidth) / 2;
+
+                // Draw rounded rectangle background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.moveTo(bgX + bgRadius, bgY);
+                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
+                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
