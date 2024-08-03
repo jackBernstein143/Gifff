@@ -236,7 +236,7 @@ function createGIFForSharing(caption) {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const horizontalPadding = 8 * scaleFactor; // Increased horizontal padding
+                const horizontalPadding = 12 * scaleFactor; // Increased horizontal padding
                 const verticalPadding = 8 * scaleFactor;
                 const textMetrics = ctx.measureText(caption);
                 const textWidth = textMetrics.width;
