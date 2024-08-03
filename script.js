@@ -33,7 +33,9 @@ async function setupCamera() {
         canvas.height = squareSize;
         videoElement.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
         
-        // Start typewriter effect after camera is set up
+        // Clear existing text and start typewriter effect after camera is set up
+        const textElement = document.querySelector('.instruction .text');
+        textElement.innerHTML = '';
         startTypewriterEffect();
     } catch (error) {
         console.error(`Error accessing webcam: ${error}`);
@@ -328,7 +330,7 @@ function shareGIF(blob) {
         navigator.share({
             files: [file],
             title: 'Check out my GIF!',
-            text: '💕'
+            text: ':)'
         }).then(() => console.log('Successful share'))
           .catch((error) => console.log('Error sharing', error));
     } else {
