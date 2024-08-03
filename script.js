@@ -134,7 +134,7 @@ function adjustInputWidth() {
     span.style.visibility = 'hidden';
     span.style.position = 'absolute';
     span.style.whiteSpace = 'pre';
-    span.style.font = getComputedStyle(captionInput).font;
+    span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
     span.textContent = captionInput.value || captionInput.placeholder;
@@ -174,66 +174,10 @@ captionInput.addEventListener('keydown', (e) => {
     }
 });
 
-function wrapText(text, maxWidth, ctx) {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
-        if (width < maxWidth) {
-            currentLine += " " + word;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    }
-    lines.push(currentLine);
-    return lines;
-}
-
-function createTextCanvas(text, width, height, fontSize = 16) {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    ctx.font = `${fontSize}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const padding = 16;
-    const maxWidth = width - (padding * 2);
-    const lines = wrapText(text, maxWidth, ctx);
-    
-    const lineHeight = fontSize * 1.2;
-    const textHeight = lineHeight * lines.length;
-    const bgHeight = textHeight + (padding * 2);
-    const bgY = height - padding - bgHeight;
-
-    // Draw rounded rectangle background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.beginPath();
-    ctx.roundRect(padding, bgY, width - (padding * 2), bgHeight, 25);
-    ctx.fill();
-
-    // Draw text
-    ctx.fillStyle = 'black';
-    lines.forEach((line, i) => {
-        const y = bgY + padding + (i * lineHeight) + (lineHeight / 2);
-        ctx.fillText(line, width / 2, y);
-    });
-
-    return canvas;
-}
-
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        const textCanvas = createTextCanvas(captionInput.value, squareSize, squareSize);
-        captionDisplay.innerHTML = ''; // Clear previous content
-        captionDisplay.appendChild(textCanvas);
-        captionDisplay.style.display = 'block';
+        captionDisplay.textContent = captionInput.value;
+        captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
     } else {
         captionInput.style.display = 'none';
@@ -266,7 +210,7 @@ shareButton.addEventListener('click', () => {
 });
 
 function createGIFForSharing(caption) {
-    const scaleFactor = 2;
+    const scaleFactor = 2; // Increase this for even higher resolution
     const gifSize = squareSize * scaleFactor;
 
     const gif = new GIF({
@@ -288,11 +232,37 @@ function createGIFForSharing(caption) {
             ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (caption) {
-                const textCanvas = createTextCanvas(caption, gifSize, gifSize, 16 * scaleFactor);
-                ctx.drawImage(textCanvas, 0, 0);
+                ctx.font = `${16 * scaleFactor}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const padding = 8 * scaleFactor;
+                const textMetrics = ctx.measureText(caption);
+                const textWidth = textMetrics.width;
+                const textHeight = 16 * scaleFactor; // Approximation of text height
+                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
+                const bgHeight = textHeight + (padding * 2);
+                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
+                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
+                const bgX = (gifSize - bgWidth) / 2;
+
+                // Draw rounded rectangle background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.moveTo(bgX + bgRadius, bgY);
+                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
+                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
             }
 
-            gif.addFrame(tempCanvas, { delay: 100 });
+            gif.addFrame(tempCanvas, { delay: 100 }); // 100ms delay (10 FPS)
 
             if (index === recordingFrames.length - 1) {
                 gif.render();
