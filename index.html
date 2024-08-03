@@ -121,13 +121,16 @@
             color: black;
             min-width: 32px;
             width: auto;
-            transition: background 0.3s ease, width 0.3s ease;
+            transition: background 0.3s ease;
             text-align: center;
             display: none;
         }
         #caption-input:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.85);
+        }
+        #caption-input::placeholder {
+            color: rgba(0, 0, 0, 0.7);
         }
         #caption-display {
             position: absolute;
