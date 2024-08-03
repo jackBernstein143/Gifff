@@ -65,7 +65,6 @@ function stopRecording() {
     setProgress(0);
     if (recordingFrames.length > 0) {
         createGIF();
-        showCaptionInput();
     }
 }
 
@@ -93,24 +92,38 @@ function captureFrame() {
 }
 
 function createGIF() {
-    const gifURL = URL.createObjectURL(new Blob(recordingFrames.map(frame => {
-        const binary = atob(frame.split(',')[1]);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            array[i] = binary.charCodeAt(i);
-        }
-        return new Blob([array], {type: 'image/jpeg'});
-    })));
+    const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        width: squareSize,
+        height: squareSize,
+        workerScript: './gif.worker.js'
+    });
 
-    gifImg.src = gifURL;
-    gifImg.style.display = 'block';
-    gifImg.style.width = `${squareSize}px`;
-    gifImg.style.height = `${squareSize}px`;
-    videoElement.style.display = 'none';
-    closeButton.style.display = 'block';
-    shareButton.style.display = 'block';
-    recordButton.style.display = 'none';
-    flipButton.style.display = 'none';
+    recordingFrames.forEach((frame, index) => {
+        const img = new Image();
+        img.src = frame;
+        img.onload = () => {
+            gif.addFrame(img, { delay: 200 });
+            if (index === recordingFrames.length - 1) {
+                gif.render();
+            }
+        };
+    });
+
+    gif.on('finished', (blob) => {
+        const gifURL = URL.createObjectURL(blob);
+        gifImg.src = gifURL;
+        gifImg.style.display = 'block';
+        gifImg.style.width = `${squareSize}px`;
+        gifImg.style.height = `${squareSize}px`;
+        videoElement.style.display = 'none';
+        closeButton.style.display = 'block';
+        shareButton.style.display = 'block';
+        recordButton.style.display = 'none';
+        flipButton.style.display = 'none';
+        showCaptionInput();
+    });
 }
 
 function adjustInputWidth() {
@@ -197,14 +210,11 @@ shareButton.addEventListener('click', () => {
 });
 
 function createGIFForSharing(caption) {
-    const scaleFactor = 2;
-    const gifSize = squareSize * scaleFactor;
-
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: gifSize,
-        height: gifSize,
+        width: squareSize,
+        height: squareSize,
         workerScript: './gif.worker.js'
     });
 
@@ -213,39 +223,20 @@ function createGIFForSharing(caption) {
         img.src = frame;
         img.onload = () => {
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = gifSize;
-            tempCanvas.height = gifSize;
+            tempCanvas.width = squareSize;
+            tempCanvas.height = squareSize;
             const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, gifSize, gifSize);
+            ctx.drawImage(img, 0, 0, squareSize, squareSize);
 
             if (caption) {
-                ctx.font = `${16 * scaleFactor}px Arial`;
+                ctx.font = '16px Arial';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const textMetrics = ctx.measureText(caption);
-                const textWidth = textMetrics.width;
-                const textHeight = 16 * scaleFactor;
-
-                const padding = 8 * scaleFactor;
-                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
-                const bgHeight = textHeight + (padding * 2);
-                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
-                const bgY = gifSize - (16 * scaleFactor) - bgHeight;
-                const bgX = (gifSize - bgWidth) / 2;
-
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.beginPath();
-                ctx.moveTo(bgX + bgRadius, bgY);
-                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
-                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = 'black';
-                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2), bgWidth - (padding * 2));
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.strokeText(caption, squareSize / 2, squareSize - 10);
+                ctx.fillText(caption, squareSize / 2, squareSize - 10);
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
