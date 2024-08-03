@@ -210,26 +210,26 @@ shareButton.addEventListener('click', () => {
 });
 
 function createGIFForSharing(caption) {
+    const scaleFactor = 2; // Increase this for even higher resolution
+    const gifSize = squareSize * scaleFactor;
+
     const gif = new GIF({
         workers: 2,
         quality: 10,
-        width: squareSize,
-        height: squareSize,
+        width: gifSize,
+        height: gifSize,
         workerScript: './gif.worker.js'
     });
-
-    const scaleFactor = 3; // Increase this for even higher resolution
-    const scaledSize = squareSize * scaleFactor;
 
     recordingFrames.forEach((frame, index) => {
         const img = new Image();
         img.src = frame;
         img.onload = () => {
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = scaledSize;
-            tempCanvas.height = scaledSize;
+            tempCanvas.width = gifSize;
+            tempCanvas.height = gifSize;
             const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, scaledSize, scaledSize);
+            ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (caption) {
                 ctx.font = `${16 * scaleFactor}px Arial`;
@@ -240,11 +240,11 @@ function createGIFForSharing(caption) {
                 const textMetrics = ctx.measureText(caption);
                 const textWidth = textMetrics.width;
                 const textHeight = 16 * scaleFactor; // Approximation of text height
-                const bgWidth = Math.min(textWidth + (padding * 2), scaledSize - (padding * 2));
+                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
                 const bgHeight = textHeight + (padding * 2);
                 const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
-                const bgY = scaledSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
-                const bgX = (scaledSize - bgWidth) / 2;
+                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
+                const bgX = (gifSize - bgWidth) / 2;
 
                 // Draw rounded rectangle background
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
@@ -259,17 +259,10 @@ function createGIFForSharing(caption) {
 
                 // Draw text
                 ctx.fillStyle = 'black';
-                ctx.fillText(caption, scaledSize / 2, bgY + (bgHeight / 2));
+                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
             }
 
-            // Scale down the canvas for the final GIF
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = squareSize;
-            finalCanvas.height = squareSize;
-            const finalCtx = finalCanvas.getContext('2d');
-            finalCtx.drawImage(tempCanvas, 0, 0, scaledSize, scaledSize, 0, 0, squareSize, squareSize);
-
-            gif.addFrame(finalCanvas, { delay: 200 });
+            gif.addFrame(tempCanvas, { delay: 200 });
 
             if (index === recordingFrames.length - 1) {
                 gif.render();
