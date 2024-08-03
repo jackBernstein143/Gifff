@@ -148,9 +148,7 @@ function adjustInputWidth() {
     captionInput.style.width = `${newWidth}px`;
 }
 
-captionInput.addEventListener('input', () => {
-    requestAnimationFrame(adjustInputWidth);
-});
+captionInput.addEventListener('input', adjustInputWidth);
 
 captionInput.addEventListener('focus', () => {
     captionInput.placeholder = '';
