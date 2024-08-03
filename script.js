@@ -17,6 +17,7 @@ let recordingStartTime;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
+let captionedGifBlob = null; // Store the captioned GIF blob
 
 const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
 progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -135,7 +136,7 @@ function createGIF(withCaption = false) {
                 const bgX = (gifSize - bgWidth) / 2;
 
                 // Draw rounded rectangle background
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // 80% opacity
                 ctx.beginPath();
                 ctx.moveTo(bgX + bgRadius, bgY);
                 ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
@@ -159,6 +160,7 @@ function createGIF(withCaption = false) {
     });
 
     gif.on('finished', (blob) => {
+        captionedGifBlob = blob; // Store the captioned GIF blob
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
@@ -261,7 +263,11 @@ recordButton.addEventListener('mouseup', stopRecording);
 recordButton.addEventListener('mouseleave', stopRecording);
 
 shareButton.addEventListener('click', () => {
-    createGIF(true); // Create a new GIF with caption for sharing
+    if (captionedGifBlob) {
+        shareGIF(captionedGifBlob);
+    } else {
+        createGIF(true); // Create a new GIF with caption for sharing
+    }
 });
 
 function shareGIF(blob) {
@@ -290,6 +296,7 @@ closeButton.addEventListener('click', () => {
     captionInput.value = '';
     captionDisplay.style.display = 'none';
     captionDisplay.textContent = '';
+    captionedGifBlob = null; // Reset the stored GIF blob
     setupCamera();
 });
 
