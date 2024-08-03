@@ -107,30 +107,30 @@
         #canvas {
             display: none;
         }
-        #caption-input {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 4px 8px;
-            border: none;
-            border-radius: 100px;
-            background: rgba(255, 255, 255, 0.50);
-            backdrop-filter: blur(6px);
-            font-size: 16px;
-            color: black;
-            min-width: 32px;
-            width: auto;
-            transition: background 0.3s ease, width 0.3s ease;
-            text-align: center;
-        }
-        #caption-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.85);
-        }
-        #caption-input::placeholder {
-            color: rgba(0, 0, 0, 0.5);
-        }
+    #caption-input {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 8px;
+        border: none;
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.50);
+        backdrop-filter: blur(6px);
+        font-size: 16px;
+        color: black;
+        min-width: 32px;
+        width: auto;
+        transition: background 0.3s ease;
+        text-align: center;
+    }
+    #caption-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.85);
+    }
+    #caption-input::placeholder {
+        color: transparent;
+    }
         #caption-display {
             position: absolute;
             bottom: 16px;
