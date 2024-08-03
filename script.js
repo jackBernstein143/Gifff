@@ -7,7 +7,6 @@ const flipButton = document.getElementById('flip-button');
 const canvas = document.getElementById('canvas');
 const progressRing = document.querySelector('#progress-ring circle');
 const captionInput = document.getElementById('caption-input');
-const captionContainer = document.querySelector('.caption-container');
 const captionDisplay = document.getElementById('caption-display');
 
 let isRecording = false;
@@ -138,7 +137,7 @@ function adjustInputWidth() {
     document.body.appendChild(span);
 
     // Measure the width of the input text or placeholder
-    span.textContent = captionInput.value || captionContainer.dataset.placeholder;
+    span.textContent = captionInput.value || captionInput.placeholder;
     const textWidth = span.offsetWidth;
 
     // Remove the temporary span
@@ -150,16 +149,25 @@ function adjustInputWidth() {
 }
 
 captionInput.addEventListener('input', () => {
-    requestAnimationFrame(() => {
-        adjustInputWidth();
-        captionContainer.classList.toggle('has-content', captionInput.value.length > 0);
-    });
+    requestAnimationFrame(adjustInputWidth);
+});
+
+captionInput.addEventListener('focus', () => {
+    captionInput.placeholder = '';
+    requestAnimationFrame(adjustInputWidth);
+});
+
+captionInput.addEventListener('blur', () => {
+    if (!captionInput.value) {
+        captionInput.placeholder = 'add a caption';
+        requestAnimationFrame(adjustInputWidth);
+    }
 });
 
 function showCaptionInput() {
-    captionContainer.style.display = 'inline-block';
+    captionInput.style.display = 'block';
     captionInput.value = '';
-    captionContainer.classList.remove('has-content');
+    captionInput.placeholder = 'add a caption';
     adjustInputWidth();
     captionInput.focus();
 }
@@ -175,9 +183,9 @@ function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
         captionDisplay.textContent = captionInput.value;
         captionDisplay.style.display = 'flex';
-        captionContainer.style.display = 'none';
+        captionInput.style.display = 'none';
     } else {
-        captionContainer.style.display = 'none';
+        captionInput.style.display = 'none';
     }
 }
 
@@ -227,7 +235,7 @@ closeButton.addEventListener('click', () => {
     shareButton.style.display = 'none';
     recordButton.style.display = 'block';
     flipButton.style.display = 'block';
-    captionContainer.style.display = 'none';
+    captionInput.style.display = 'none';
     captionInput.value = '';
     captionDisplay.style.display = 'none';
     captionDisplay.textContent = '';
