@@ -174,9 +174,37 @@ captionInput.addEventListener('keydown', (e) => {
     }
 });
 
+function wrapText(text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = measureText(currentLine + " " + word);
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+}
+
+function measureText(text) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = getComputedStyle(captionDisplay).font;
+    return context.measureText(text).width;
+}
+
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        captionDisplay.textContent = captionInput.value;
+        const maxWidth = squareSize - 32; // 16px padding on each side
+        const lines = wrapText(captionInput.value, maxWidth);
+        captionDisplay.innerHTML = lines.join('<br>');
         captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
     } else {
@@ -209,25 +237,6 @@ shareButton.addEventListener('click', () => {
     createGIFForSharing(caption);
 });
 
-function wrapText(context, text, maxWidth) {
-    let words = text.split(' ');
-    let lines = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-        let word = words[i];
-        let width = context.measureText(currentLine + " " + word).width;
-        if (width < maxWidth) {
-            currentLine += " " + word;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    }
-    lines.push(currentLine);
-    return lines;
-}
-
 function createGIFForSharing(caption) {
     const scaleFactor = 2; // Increase this for even higher resolution
     const gifSize = squareSize * scaleFactor;
@@ -255,9 +264,9 @@ function createGIFForSharing(caption) {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const padding = 8 * scaleFactor;
+                const padding = 16 * scaleFactor; // Increased horizontal padding
                 const maxWidth = gifSize - (padding * 2);
-                const lines = wrapText(ctx, caption, maxWidth);
+                const lines = wrapText(caption, maxWidth / scaleFactor).map(line => line.trim());
                 
                 const lineHeight = 20 * scaleFactor;
                 const textHeight = lineHeight * lines.length;
