@@ -91,7 +91,7 @@ function captureFrame() {
     recordingFrames.push(canvas.toDataURL('image/jpeg', 0.5));
 }
 
-function createGIF() {
+function createGIF(withCaption = false) {
     const gif = new GIF({
         workers: 2,
         quality: 10,
@@ -104,7 +104,26 @@ function createGIF() {
         const img = new Image();
         img.src = frame;
         img.onload = () => {
-            gif.addFrame(img, { delay: 200 });
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = squareSize;
+            tempCanvas.height = squareSize;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, squareSize, squareSize);
+
+            if (withCaption) {
+                const caption = captionInput.value || captionDisplay.textContent || '';
+                ctx.font = '16px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.strokeText(caption, squareSize / 2, squareSize - 16);
+                ctx.fillText(caption, squareSize / 2, squareSize - 16);
+            }
+
+            gif.addFrame(tempCanvas, { delay: 200 });
+
             if (index === recordingFrames.length - 1) {
                 gif.render();
             }
@@ -121,6 +140,11 @@ function createGIF() {
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
         showCaptionInput();
+
+        if (withCaption) {
+            // If we're creating a GIF with caption for sharing, trigger the share
+            shareGIF(blob);
+        }
     });
 }
 
@@ -208,23 +232,23 @@ recordButton.addEventListener('mouseup', stopRecording);
 recordButton.addEventListener('mouseleave', stopRecording);
 
 shareButton.addEventListener('click', () => {
+    createGIF(true); // Create a new GIF with caption for sharing
+});
+
+function shareGIF(blob) {
     if (navigator.share) {
-        fetch(gifImg.src)
-            .then(res => res.blob())
-            .then(blob => {
-                const file = new File([blob], "my_gif.gif", { type: "image/gif" });
-                navigator.share({
-                    files: [file],
-                    title: 'Check out my GIF!',
-                    text: captionInput.value || captionDisplay.textContent || 'I made this GIF using the awesome GIF Creator app!'
-                }).then(() => console.log('Successful share'))
-                    .catch((error) => console.log('Error sharing', error));
-            });
+        const file = new File([blob], "my_gif.gif", { type: "image/gif" });
+        navigator.share({
+            files: [file],
+            title: 'Check out my GIF!',
+            text: 'I made this GIF using the awesome GIF Creator app!'
+        }).then(() => console.log('Successful share'))
+          .catch((error) => console.log('Error sharing', error));
     } else {
         console.log('Web Share API not supported');
         alert('Sharing is not supported on this browser.');
     }
-});
+}
 
 closeButton.addEventListener('click', () => {
     gifImg.style.display = 'none';
