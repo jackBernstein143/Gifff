@@ -236,12 +236,13 @@ function createGIFForSharing(caption) {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const padding = 8 * scaleFactor;
+                const horizontalPadding = 8 * scaleFactor; // Increased horizontal padding
+                const verticalPadding = 8 * scaleFactor;
                 const textMetrics = ctx.measureText(caption);
                 const textWidth = textMetrics.width;
                 const textHeight = 16 * scaleFactor; // Approximation of text height
-                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
-                const bgHeight = textHeight + (padding * 2);
+                const bgWidth = Math.min(textWidth + (horizontalPadding * 2), gifSize - (horizontalPadding * 2));
+                const bgHeight = textHeight + (verticalPadding * 2);
                 const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
                 const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
                 const bgX = (gifSize - bgWidth) / 2;
