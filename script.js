@@ -59,6 +59,28 @@ function startTypewriterEffect() {
     typeWriter();
 }
 
+function updateInstructionAfterGIF() {
+    const circleElement = document.querySelector('.instruction .circle');
+    const textElement = document.querySelector('.instruction .text');
+    
+    circleElement.style.backgroundColor = '#FFBD36';
+    textElement.innerHTML = ''; // Clear existing text
+    textElement.style.opacity = 1;
+
+    const newText = "share with your fraaandz 💕";
+    let index = 0;
+
+    function typeWriter() {
+        if (index < newText.length) {
+            textElement.innerHTML += newText.charAt(index);
+            index++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+
+    typeWriter();
+}
+
 function setProgress(percent) {
     const offset = circumference - percent / 100 * circumference;
     progressRing.style.strokeDashoffset = offset;
@@ -144,6 +166,7 @@ function createGIF() {
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
         showCaptionInput();
+        updateInstructionAfterGIF();
     });
 }
 
@@ -323,6 +346,14 @@ closeButton.addEventListener('click', () => {
     captionInput.value = '';
     captionDisplay.style.display = 'none';
     captionDisplay.textContent = '';
+    
+    // Reset instruction
+    const circleElement = document.querySelector('.instruction .circle');
+    const textElement = document.querySelector('.instruction .text');
+    circleElement.style.backgroundColor = '#04CA95';
+    textElement.innerHTML = '';
+    textElement.style.opacity = 0;
+    
     setupCamera();
 });
 
