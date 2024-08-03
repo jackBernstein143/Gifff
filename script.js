@@ -18,6 +18,7 @@ const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
 let captionedGifBlob = null; // Store the captioned GIF blob
+let currentCaption = ''; // Store the current caption
 
 const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
 progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -115,7 +116,7 @@ function createGIF(withCaption = false) {
             ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (withCaption) {
-                const caption = captionInput.value || captionDisplay.textContent || '';
+                const caption = currentCaption;
                 
                 // Set up text properties
                 ctx.font = `${16 * scaleFactor}px Arial`;
@@ -172,10 +173,6 @@ function createGIF(withCaption = false) {
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
         showCaptionInput();
-
-        if (withCaption) {
-            shareGIF(blob);
-        }
     });
 }
 
@@ -219,7 +216,7 @@ captionInput.addEventListener('blur', () => {
 
 function showCaptionInput() {
     captionInput.style.display = 'block';
-    captionInput.value = '';
+    captionInput.value = currentCaption;
     captionInput.placeholder = 'add a caption';
     adjustInputWidth();
 }
@@ -233,9 +230,11 @@ captionInput.addEventListener('keydown', (e) => {
 
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        captionDisplay.textContent = captionInput.value;
+        currentCaption = captionInput.value.trim();
+        captionDisplay.textContent = currentCaption;
         captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
+        createGIF(true); // Recreate the GIF with the new caption
     } else {
         captionInput.style.display = 'none';
     }
@@ -296,6 +295,7 @@ closeButton.addEventListener('click', () => {
     captionInput.value = '';
     captionDisplay.style.display = 'none';
     captionDisplay.textContent = '';
+    currentCaption = ''; // Reset the current caption
     captionedGifBlob = null; // Reset the stored GIF blob
     setupCamera();
 });
