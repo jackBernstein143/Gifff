@@ -310,4 +310,21 @@ flipButton.addEventListener('click', () => {
     setupCamera();
 });
 
+// Typewriter effect for instruction text
+document.addEventListener('DOMContentLoaded', () => {
+    const text = "hold to record your gifff 🎬";
+    const textElement = document.querySelector('.instruction .text');
+    let index = 0;
+
+    function typeWriter() {
+        if (index < text.length) {
+            textElement.innerHTML += text.charAt(index);
+            index++;
+            setTimeout(typeWriter, 50); // Adjust the speed here (lower number = faster)
+        }
+    }
+
+    typeWriter();
+});
+
 setupCamera();
