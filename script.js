@@ -149,34 +149,29 @@ function adjustInputWidth() {
 }
 
 captionInput.addEventListener('input', () => {
-    requestAnimationFrame(adjustInputWidth);
-    if (captionInput.value.length === 0) {
-        captionInput.style.textAlign = 'center';
-    } else {
-        captionInput.style.textAlign = 'left';
-    }
+    requestAnimationFrame(() => {
+        adjustInputWidth();
+        updateInputAlignment();
+    });
 });
 
-function setInitialCursorPosition() {
-    requestAnimationFrame(() => {
-        captionInput.setSelectionRange(0, 0);
-    });
+function updateInputAlignment() {
+    if (captionInput.value.length === 0) {
+        captionInput.style.textAlign = 'right';
+    } else {
+        captionInput.style.textAlign = 'center';
+    }
 }
 
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
-    captionInput.style.textAlign = 'center';
+    updateInputAlignment();
     adjustInputWidth();
     captionInput.focus();
-    setInitialCursorPosition();
 }
 
-captionInput.addEventListener('focus', () => {
-    if (!captionInput.value) {
-        setInitialCursorPosition();
-    }
-});
+captionInput.addEventListener('focus', updateInputAlignment);
 
 captionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
