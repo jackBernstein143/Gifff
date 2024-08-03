@@ -125,6 +125,10 @@ function createGIF() {
 }
 
 function adjustInputWidth() {
+    const padding = 16; // 8px on each side
+    const minWidth = 32; // Minimum width when empty
+    
+    // Create a hidden span to measure text width
     const span = document.createElement('span');
     span.style.visibility = 'hidden';
     span.style.position = 'absolute';
@@ -132,31 +136,44 @@ function adjustInputWidth() {
     span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
+    // Measure the width of the input text or placeholder
     span.textContent = captionInput.value || captionInput.placeholder;
     const textWidth = span.offsetWidth;
 
+    // Remove the temporary span
     document.body.removeChild(span);
 
-    const paddingWidth = 20; // 10px padding on each side
-    const newWidth = Math.min(Math.max(textWidth + paddingWidth, 100), captionInput.parentElement.offsetWidth * 0.8);
+    // Calculate and set the new width
+    const newWidth = Math.max(textWidth + padding, minWidth);
     captionInput.style.width = `${newWidth}px`;
 }
 
 captionInput.addEventListener('input', () => {
     adjustInputWidth();
     if (captionInput.value.trim()) {
-        captionInput.style.background = 'rgba(255, 255, 255, 0.85)';
+        captionInput.style.textAlign = 'center';
     } else {
-        captionInput.style.background = 'rgba(255, 255, 255, 0.50)';
+        captionInput.style.textAlign = 'left';
     }
 });
+
+function setInitialCursorPosition() {
+    captionInput.setSelectionRange(0, 0);
+}
 
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
     adjustInputWidth();
     captionInput.focus();
+    setInitialCursorPosition();
 }
+
+captionInput.addEventListener('focus', () => {
+    if (!captionInput.value) {
+        setInitialCursorPosition();
+    }
+});
 
 captionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
