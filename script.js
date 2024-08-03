@@ -17,8 +17,6 @@ let recordingStartTime;
 const squareSize = 320;
 const maxRecordingTime = 3000; // 3 seconds in milliseconds
 let currentFacingMode = 'user';
-let captionedGifBlob = null;
-let currentCaption = '';
 
 const circumference = progressRing.r.baseVal.value * 2 * Math.PI;
 progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -52,7 +50,7 @@ function startRecording() {
     recordButton.classList.add('recording');
     progressRing.style.display = 'block';
     recordingStartTime = Date.now();
-    recordingInterval = setInterval(captureFrame, 200);
+    recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
     recordingTimeout = setTimeout(stopRecording, maxRecordingTime);
     requestAnimationFrame(updateProgress);
 }
@@ -94,7 +92,7 @@ function captureFrame() {
 }
 
 function createGIF(withCaption = false) {
-    const scaleFactor = 2;
+    const scaleFactor = 2; // Increase this for higher resolution
     const gifSize = squareSize * scaleFactor;
 
     const gif = new GIF({
@@ -116,7 +114,40 @@ function createGIF(withCaption = false) {
             ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (withCaption) {
-                addCaptionToFrame(ctx, gifSize, scaleFactor);
+                const caption = captionInput.value || captionDisplay.textContent || '';
+                
+                // Set up text properties
+                ctx.font = `${16 * scaleFactor}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Measure text
+                const textMetrics = ctx.measureText(caption);
+                const textWidth = textMetrics.width;
+                const textHeight = 16 * scaleFactor; // Approximation of text height
+
+                // Calculate background dimensions
+                const padding = 8 * scaleFactor;
+                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
+                const bgHeight = textHeight + (padding * 2);
+                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
+                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
+                const bgX = (gifSize - bgWidth) / 2;
+
+                // Draw rounded rectangle background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.moveTo(bgX + bgRadius, bgY);
+                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
+                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
+                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2), bgWidth - (padding * 2));
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
@@ -128,11 +159,10 @@ function createGIF(withCaption = false) {
     });
 
     gif.on('finished', (blob) => {
-        captionedGifBlob = blob;
         const gifURL = URL.createObjectURL(blob);
         gifImg.src = gifURL;
         gifImg.style.display = 'block';
-        gifImg.style.width = `${squareSize}px`;
+        gifImg.style.width = `${squareSize}px`; // Scale down for display
         gifImg.style.height = `${squareSize}px`;
         videoElement.style.display = 'none';
         closeButton.style.display = 'block';
@@ -140,45 +170,18 @@ function createGIF(withCaption = false) {
         recordButton.style.display = 'none';
         flipButton.style.display = 'none';
         showCaptionInput();
+
+        if (withCaption) {
+            shareGIF(blob);
+        }
     });
 }
 
-function addCaptionToFrame(ctx, gifSize, scaleFactor) {
-    const caption = currentCaption;
-    
-    ctx.font = `${16 * scaleFactor}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const textMetrics = ctx.measureText(caption);
-    const textWidth = textMetrics.width;
-    const textHeight = 16 * scaleFactor;
-
-    const padding = 8 * scaleFactor;
-    const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
-    const bgHeight = textHeight + (padding * 2);
-    const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
-    const bgY = gifSize - (16 * scaleFactor) - bgHeight;
-    const bgX = (gifSize - bgWidth) / 2;
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.beginPath();
-    ctx.moveTo(bgX + bgRadius, bgY);
-    ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
-    ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
-    ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
-    ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = 'black';
-    ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2), bgWidth - (padding * 2));
-}
-
 function adjustInputWidth() {
-    const padding = 16;
-    const minWidth = 32;
+    const padding = 16; // 8px on each side
+    const minWidth = 32; // Minimum width when empty
     
+    // Create a hidden span to measure text width
     const span = document.createElement('span');
     span.style.visibility = 'hidden';
     span.style.position = 'absolute';
@@ -186,11 +189,14 @@ function adjustInputWidth() {
     span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
+    // Measure the width of the input text or placeholder
     span.textContent = captionInput.value || captionInput.placeholder;
     const textWidth = span.offsetWidth;
 
+    // Remove the temporary span
     document.body.removeChild(span);
 
+    // Calculate and set the new width
     const newWidth = Math.max(textWidth + padding, minWidth);
     captionInput.style.width = `${newWidth}px`;
 }
@@ -211,7 +217,7 @@ captionInput.addEventListener('blur', () => {
 
 function showCaptionInput() {
     captionInput.style.display = 'block';
-    captionInput.value = currentCaption;
+    captionInput.value = '';
     captionInput.placeholder = 'add a caption';
     adjustInputWidth();
 }
@@ -225,11 +231,9 @@ captionInput.addEventListener('keydown', (e) => {
 
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        currentCaption = captionInput.value.trim();
-        captionDisplay.textContent = currentCaption;
+        captionDisplay.textContent = captionInput.value;
         captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
-        createGIF(true);
     } else {
         captionInput.style.display = 'none';
     }
@@ -251,16 +255,13 @@ recordButton.addEventListener('touchend', (e) => {
     stopRecording();
 });
 
+// For desktop testing
 recordButton.addEventListener('mousedown', startRecording);
 recordButton.addEventListener('mouseup', stopRecording);
 recordButton.addEventListener('mouseleave', stopRecording);
 
 shareButton.addEventListener('click', () => {
-    if (captionedGifBlob) {
-        shareGIF(captionedGifBlob);
-    } else {
-        createGIF(true);
-    }
+    createGIF(true); // Create a new GIF with caption for sharing
 });
 
 function shareGIF(blob) {
@@ -289,8 +290,6 @@ closeButton.addEventListener('click', () => {
     captionInput.value = '';
     captionDisplay.style.display = 'none';
     captionDisplay.textContent = '';
-    currentCaption = '';
-    captionedGifBlob = null;
     setupCamera();
 });
 
