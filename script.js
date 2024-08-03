@@ -136,8 +136,8 @@ function adjustInputWidth() {
     span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
-    // Measure the width of the input text
-    span.textContent = captionInput.value || ' ';
+    // Measure the width of the input text or placeholder
+    span.textContent = captionInput.value || captionInput.placeholder;
     const textWidth = span.offsetWidth;
 
     // Remove the temporary span
@@ -152,11 +152,23 @@ captionInput.addEventListener('input', () => {
     requestAnimationFrame(adjustInputWidth);
 });
 
+captionInput.addEventListener('focus', () => {
+    captionInput.placeholder = '';
+    adjustInputWidth();
+});
+
+captionInput.addEventListener('blur', () => {
+    if (!captionInput.value) {
+        captionInput.placeholder = 'add a caption';
+        adjustInputWidth();
+    }
+});
+
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
+    captionInput.placeholder = 'add a caption';
     adjustInputWidth();
-    captionInput.focus();
 }
 
 captionInput.addEventListener('keydown', (e) => {
@@ -179,6 +191,7 @@ function finalizeCaptionInput() {
 captionDisplay.addEventListener('click', () => {
     captionDisplay.style.display = 'none';
     showCaptionInput();
+    captionInput.focus();
 });
 
 recordButton.addEventListener('touchstart', (e) => {
