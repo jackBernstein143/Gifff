@@ -50,7 +50,7 @@ function startRecording() {
     recordButton.classList.add('recording');
     progressRing.style.display = 'block';
     recordingStartTime = Date.now();
-    recordingInterval = setInterval(captureFrame, 200); // Capture a frame every 200ms
+    recordingInterval = setInterval(captureFrame, 100); // Capture a frame every 100ms (10 FPS)
     recordingTimeout = setTimeout(stopRecording, maxRecordingTime);
     requestAnimationFrame(updateProgress);
 }
@@ -104,7 +104,7 @@ function createGIF() {
         const img = new Image();
         img.src = frame;
         img.onload = () => {
-            gif.addFrame(img, { delay: 200 });
+            gif.addFrame(img, { delay: 100 }); // 100ms delay (10 FPS)
             if (index === recordingFrames.length - 1) {
                 gif.render();
             }
@@ -262,7 +262,7 @@ function createGIFForSharing(caption) {
                 ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
             }
 
-            gif.addFrame(tempCanvas, { delay: 200 });
+            gif.addFrame(tempCanvas, { delay: 100 }); // 100ms delay (10 FPS)
 
             if (index === recordingFrames.length - 1) {
                 gif.render();
