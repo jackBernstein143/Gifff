@@ -128,9 +128,9 @@ function createGIF(withCaption = false) {
 
                 // Calculate background dimensions
                 const padding = 8 * scaleFactor;
-                const bgWidth = textWidth + (padding * 2);
+                const bgWidth = Math.min(textWidth + (padding * 2), gifSize - (padding * 2));
                 const bgHeight = textHeight + (padding * 2);
-                const bgRadius = 100 * scaleFactor / 2; // 100px diameter = 50px radius
+                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
                 const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
                 const bgX = (gifSize - bgWidth) / 2;
 
@@ -147,7 +147,7 @@ function createGIF(withCaption = false) {
 
                 // Draw text
                 ctx.fillStyle = 'black';
-                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
+                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2), bgWidth - (padding * 2));
             }
 
             gif.addFrame(tempCanvas, { delay: 200 });
