@@ -149,29 +149,15 @@ function adjustInputWidth() {
 }
 
 captionInput.addEventListener('input', () => {
-    requestAnimationFrame(() => {
-        adjustInputWidth();
-        updateInputAlignment();
-    });
+    requestAnimationFrame(adjustInputWidth);
 });
-
-function updateInputAlignment() {
-    if (captionInput.value.length === 0) {
-        captionInput.style.textAlign = 'right';
-    } else {
-        captionInput.style.textAlign = 'center';
-    }
-}
 
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
-    updateInputAlignment();
     adjustInputWidth();
     captionInput.focus();
 }
-
-captionInput.addEventListener('focus', updateInputAlignment);
 
 captionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
