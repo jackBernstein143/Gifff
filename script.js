@@ -149,16 +149,13 @@ function adjustInputWidth() {
 }
 
 captionInput.addEventListener('input', () => {
-    adjustInputWidth();
-    if (captionInput.value.trim()) {
-        captionInput.style.textAlign = 'center';
-    } else {
-        captionInput.style.textAlign = 'left';
-    }
+    requestAnimationFrame(adjustInputWidth);
 });
 
 function setInitialCursorPosition() {
-    captionInput.setSelectionRange(0, 0);
+    requestAnimationFrame(() => {
+        captionInput.setSelectionRange(0, 0);
+    });
 }
 
 function showCaptionInput() {
