@@ -107,32 +107,48 @@
         #canvas {
             display: none;
         }
-   #caption-input {
-        position: absolute;
-        bottom: 16px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-        padding: 4px 8px;
-        border: none;
-        border-radius: 100px;
-        background: rgba(255, 255, 255, 0.50);
-        backdrop-filter: blur(6px);
-        font-size: 16px;
-        color: black;
-        min-width: 32px;
-        width: auto;
-        transition: background 0.3s ease;
-        text-align: center; /* This ensures the cursor stays left-aligned */
-    }
-    #caption-input:focus {
-        outline: none;
-        background: rgba(255, 255, 255, 0.85);
-    }
-    #caption-input::placeholder {
-        color: rgba(0, 0, 0, 0.5);
-        text-align: center;
-    }
+        .caption-container {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: inline-block;
+        }
+        #caption-input {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.50);
+            backdrop-filter: blur(6px);
+            font-size: 16px;
+            color: black;
+            min-width: 32px;
+            width: auto;
+            transition: background 0.3s ease;
+            text-align: left;
+        }
+        #caption-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.85);
+        }
+        #caption-input::placeholder {
+            color: transparent;
+        }
+        .caption-container::before {
+            content: attr(data-placeholder);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+        }
+        .caption-container:focus-within::before,
+        .caption-container.has-content::before {
+            opacity: 0;
+        }
         #caption-display {
             position: absolute;
             bottom: 16px;
@@ -166,7 +182,9 @@
             <button id="record-button"></button>
             <button id="share-button"></button>
         </div>
-        <input type="text" id="caption-input" placeholder="add a caption" maxlength="50">
+        <div class="caption-container" data-placeholder="add a caption">
+            <input type="text" id="caption-input" maxlength="50">
+        </div>
         <div id="caption-display"></div>
         <canvas id="canvas"></canvas>
     </div>
