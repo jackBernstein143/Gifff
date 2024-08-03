@@ -47,6 +47,7 @@ function startTypewriterEffect() {
     let index = 0;
 
     textElement.style.opacity = 1; // Make text visible
+    textElement.style.fontWeight = 'bold'; // Ensure text is bold
 
     function typeWriter() {
         if (index < text.length) {
@@ -66,6 +67,7 @@ function updateInstructionAfterGIF() {
     circleElement.style.backgroundColor = '#FFBD36';
     textElement.innerHTML = ''; // Clear existing text
     textElement.style.opacity = 1;
+    textElement.style.fontWeight = 'bold'; // Ensure text stays bold
 
     const newText = "share with your fraaandz 💕";
     let index = 0;
@@ -353,6 +355,7 @@ closeButton.addEventListener('click', () => {
     circleElement.style.backgroundColor = '#04CA95';
     textElement.innerHTML = '';
     textElement.style.opacity = 0;
+    textElement.style.fontWeight = 'bold'; // Reset to bold
     
     setupCamera();
 });
