@@ -136,8 +136,8 @@ function adjustInputWidth() {
     span.style.font = window.getComputedStyle(captionInput).font;
     document.body.appendChild(span);
 
-    // Measure the width of the input text or placeholder
-    span.textContent = captionInput.value || captionInput.placeholder;
+    // Measure the width of the input text
+    span.textContent = captionInput.value || ' ';
     const textWidth = span.offsetWidth;
 
     // Remove the temporary span
@@ -152,22 +152,9 @@ captionInput.addEventListener('input', () => {
     requestAnimationFrame(adjustInputWidth);
 });
 
-captionInput.addEventListener('focus', () => {
-    captionInput.placeholder = '';
-    requestAnimationFrame(adjustInputWidth);
-});
-
-captionInput.addEventListener('blur', () => {
-    if (!captionInput.value) {
-        captionInput.placeholder = 'add a caption';
-        requestAnimationFrame(adjustInputWidth);
-    }
-});
-
 function showCaptionInput() {
     captionInput.style.display = 'block';
     captionInput.value = '';
-    captionInput.placeholder = 'add a caption';
     adjustInputWidth();
     captionInput.focus();
 }
