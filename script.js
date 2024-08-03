@@ -328,7 +328,7 @@ function shareGIF(blob) {
         navigator.share({
             files: [file],
             title: 'Check out my GIF!',
-            text: 'I made this GIF using the awesome GIF Creator app!'
+            text: '💕'
         }).then(() => console.log('Successful share'))
           .catch((error) => console.log('Error sharing', error));
     } else {
