@@ -152,13 +152,13 @@
             color: black;
         }
         .instruction {
-            position: absolute;
-            top: -32px;
-            left: 0;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
+    position: absolute;
+    top: -36px; /* 16px gap + 20px circle height */
+    left: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
         .circle {
             width: 20px;
             height: 20px;
@@ -167,12 +167,14 @@
             flex-shrink: 0;
         }
         .text {
-            margin-left: 8px;
-            color: #FFFFFF;
-            font-size: 16px;
-            white-space: nowrap;
-            opacity: 0;
-        }
+    margin-left: 8px;
+    color: #FFFFFF;
+    font-size: 16px;
+    white-space: nowrap;
+    opacity: 0;
+    height: 20px; /* Set a fixed height to prevent shifting */
+    line-height: 20px; /* Align text vertically */
+}
     </style>
 </head>
 <body>
