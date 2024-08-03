@@ -174,14 +174,14 @@ captionInput.addEventListener('keydown', (e) => {
     }
 });
 
-function wrapText(text, maxWidth) {
+function wrapText(text, maxWidth, ctx) {
     const words = text.split(' ');
     const lines = [];
     let currentLine = words[0];
 
     for (let i = 1; i < words.length; i++) {
         const word = words[i];
-        const width = measureText(currentLine + " " + word);
+        const width = ctx.measureText(currentLine + " " + word).width;
         if (width < maxWidth) {
             currentLine += " " + word;
         } else {
@@ -193,19 +193,47 @@ function wrapText(text, maxWidth) {
     return lines;
 }
 
-function measureText(text) {
+function createTextCanvas(text, width, height, fontSize = 16) {
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    context.font = getComputedStyle(captionDisplay).font;
-    return context.measureText(text).width;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const padding = 16;
+    const maxWidth = width - (padding * 2);
+    const lines = wrapText(text, maxWidth, ctx);
+    
+    const lineHeight = fontSize * 1.2;
+    const textHeight = lineHeight * lines.length;
+    const bgHeight = textHeight + (padding * 2);
+    const bgY = height - padding - bgHeight;
+
+    // Draw rounded rectangle background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.roundRect(padding, bgY, width - (padding * 2), bgHeight, 25);
+    ctx.fill();
+
+    // Draw text
+    ctx.fillStyle = 'black';
+    lines.forEach((line, i) => {
+        const y = bgY + padding + (i * lineHeight) + (lineHeight / 2);
+        ctx.fillText(line, width / 2, y);
+    });
+
+    return canvas;
 }
 
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        const maxWidth = squareSize - 64; // 32px padding on each side
-        const lines = wrapText(captionInput.value, maxWidth);
-        captionDisplay.innerHTML = lines.join('<br>');
-        captionDisplay.style.display = 'flex';
+        const textCanvas = createTextCanvas(captionInput.value, squareSize, squareSize);
+        captionDisplay.innerHTML = ''; // Clear previous content
+        captionDisplay.appendChild(textCanvas);
+        captionDisplay.style.display = 'block';
         captionInput.style.display = 'none';
     } else {
         captionInput.style.display = 'none';
@@ -238,7 +266,7 @@ shareButton.addEventListener('click', () => {
 });
 
 function createGIFForSharing(caption) {
-    const scaleFactor = 2; // Increase this for even higher resolution
+    const scaleFactor = 2;
     const gifSize = squareSize * scaleFactor;
 
     const gif = new GIF({
@@ -260,42 +288,11 @@ function createGIFForSharing(caption) {
             ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (caption) {
-                ctx.font = `${16 * scaleFactor}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const padding = 32 * scaleFactor; // Increased horizontal padding
-                const maxWidth = gifSize - (padding * 2);
-                const lines = wrapText(caption, maxWidth / scaleFactor).map(line => line.trim());
-                
-                const lineHeight = 20 * scaleFactor;
-                const textHeight = lineHeight * lines.length;
-                const bgHeight = textHeight + (padding);
-                const bgWidth = gifSize - (padding);
-                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
-                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
-                const bgX = padding / 2;
-
-                // Draw rounded rectangle background
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.moveTo(bgX + bgRadius, bgY);
-                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
-                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
-                ctx.closePath();
-                ctx.fill();
-
-                // Draw text
-                ctx.fillStyle = 'black';
-                lines.forEach((line, i) => {
-                    const y = bgY + (bgHeight / 2) - ((lines.length - 1) * lineHeight / 2) + (i * lineHeight);
-                    ctx.fillText(line, gifSize / 2, y);
-                });
+                const textCanvas = createTextCanvas(caption, gifSize, gifSize, 16 * scaleFactor);
+                ctx.drawImage(textCanvas, 0, 0);
             }
 
-            gif.addFrame(tempCanvas, { delay: 100 }); // 100ms delay (10 FPS)
+            gif.addFrame(tempCanvas, { delay: 100 });
 
             if (index === recordingFrames.length - 1) {
                 gif.render();
