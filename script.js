@@ -177,6 +177,7 @@ function createGIF() {
 function adjustInputWidth() {
     const padding = 16;
     const minWidth = 32;
+    const maxWidth = 288; // Maximum width before wrapping
     
     const span = document.createElement('span');
     span.style.visibility = 'hidden';
@@ -190,8 +191,18 @@ function adjustInputWidth() {
 
     document.body.removeChild(span);
 
-    const newWidth = Math.max(textWidth + padding, minWidth);
+    const newWidth = Math.min(Math.max(textWidth + padding, minWidth), maxWidth);
     captionInput.style.width = `${newWidth}px`;
+
+    // If the text is too long, enable text wrapping
+    if (textWidth + padding > maxWidth) {
+        captionInput.style.whiteSpace = 'normal';
+        captionInput.style.height = 'auto';
+        captionInput.style.overflow = 'hidden';
+    } else {
+        captionInput.style.whiteSpace = 'nowrap';
+        captionInput.style.height = '';
+    }
 }
 
 captionInput.addEventListener('input', adjustInputWidth);
@@ -224,12 +235,31 @@ captionInput.addEventListener('keydown', (e) => {
 
 function finalizeCaptionInput() {
     if (captionInput.value.trim()) {
-        captionDisplay.textContent = captionInput.value;
+        captionDisplay.innerHTML = formatCaption(captionInput.value);
         captionDisplay.style.display = 'flex';
         captionInput.style.display = 'none';
     } else {
         captionInput.style.display = 'none';
     }
+}
+
+function formatCaption(text) {
+    const words = text.split(' ');
+    let lines = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+        if ((currentLine + word).length > 30) { // Adjust this number to change when wrapping occurs
+            if (currentLine) lines.push(currentLine.trim());
+            currentLine = word + ' ';
+        } else {
+            currentLine += word + ' ';
+        }
+    });
+
+    if (currentLine) lines.push(currentLine.trim());
+
+    return lines.map(line => `<div class="caption-line">${line}</div>`).join('');
 }
 
 captionDisplay.addEventListener('click', () => {
@@ -280,35 +310,7 @@ function createGIFForSharing(caption) {
             ctx.drawImage(img, 0, 0, gifSize, gifSize);
 
             if (caption) {
-                ctx.font = `${16 * scaleFactor}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const horizontalPadding = 12 * scaleFactor; // Increased horizontal padding
-                const verticalPadding = 8 * scaleFactor;
-                const textMetrics = ctx.measureText(caption);
-                const textWidth = textMetrics.width;
-                const textHeight = 16 * scaleFactor; // Approximation of text height
-                const bgWidth = Math.min(textWidth + (horizontalPadding * 2), gifSize - (horizontalPadding * 2));
-                const bgHeight = textHeight + (verticalPadding * 2);
-                const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
-                const bgY = gifSize - (16 * scaleFactor) - bgHeight; // 16px from bottom
-                const bgX = (gifSize - bgWidth) / 2;
-
-                // Draw rounded rectangle background
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.moveTo(bgX + bgRadius, bgY);
-                ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX, bgY + bgHeight, bgRadius);
-                ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY, bgRadius);
-                ctx.arcTo(bgX, bgY, bgX + bgWidth, bgY, bgRadius);
-                ctx.closePath();
-                ctx.fill();
-
-                // Draw text
-                ctx.fillStyle = 'black';
-                ctx.fillText(caption, gifSize / 2, bgY + (bgHeight / 2));
+                drawWrappedText(ctx, caption, gifSize, scaleFactor);
             }
 
             gif.addFrame(tempCanvas, { delay: 100 }); // 100ms delay (10 FPS)
@@ -321,6 +323,61 @@ function createGIFForSharing(caption) {
 
     gif.on('finished', (blob) => {
         shareGIF(blob);
+    });
+}
+
+function drawWrappedText(ctx, text, gifSize, scaleFactor) {
+    const fontSize = 16 * scaleFactor;
+    const lineHeight = fontSize * 1.2;
+    const maxWidth = 288 * scaleFactor;
+    const horizontalPadding = 12 * scaleFactor;
+    const verticalPadding = 8 * scaleFactor;
+
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const words = text.split(' ');
+    let lines = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth - (horizontalPadding * 2)) {
+            lines.push(currentLine);
+            currentLine = word;
+        } else {
+            currentLine = testLine;
+        }
+    });
+    lines.push(currentLine);
+
+    const totalHeight = lines.length * lineHeight + (verticalPadding * 2);
+    const bgY = gifSize - 16 * scaleFactor - totalHeight;
+
+    // Draw background for each line
+    lines.forEach((line, index) => {
+        const lineWidth = ctx.measureText(line).width;
+        const bgWidth = Math.min(lineWidth + (horizontalPadding * 2), maxWidth);
+        const bgHeight = lineHeight + (verticalPadding * 2);
+        const bgRadius = Math.min(50 * scaleFactor, bgHeight / 2);
+        const bgX = (gifSize - bgWidth) / 2;
+        const lineY = bgY + (index * lineHeight);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.moveTo(bgX + bgRadius, lineY);
+        ctx.arcTo(bgX + bgWidth, lineY, bgX + bgWidth, lineY + bgHeight, bgRadius);
+        ctx.arcTo(bgX + bgWidth, lineY + bgHeight, bgX, lineY + bgHeight, bgRadius);
+        ctx.arcTo(bgX, lineY + bgHeight, bgX, lineY, bgRadius);
+        ctx.arcTo(bgX, lineY, bgX + bgWidth, lineY, bgRadius);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw text
+        ctx.fillStyle = 'black';
+        ctx.fillText(line, bgX + horizontalPadding, lineY + verticalPadding);
     });
 }
 
