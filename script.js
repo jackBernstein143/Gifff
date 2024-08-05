@@ -247,9 +247,10 @@ function formatCaption(text) {
     const words = text.split(' ');
     let lines = [];
     let currentLine = '';
+    const maxLineLength = 24; // Adjust this value to change when wrapping occurs
 
     words.forEach(word => {
-        if ((currentLine + word).length > 30) { // Adjust this number to change when wrapping occurs
+        if ((currentLine + word).length > maxLineLength) {
             if (currentLine) lines.push(currentLine.trim());
             currentLine = word + ' ';
         } else {
@@ -328,7 +329,7 @@ function createGIFForSharing(caption) {
 
 function drawWrappedText(ctx, text, gifSize, scaleFactor) {
     const fontSize = 16 * scaleFactor;
-    const lineHeight = fontSize * 1.2;
+    const lineHeight = fontSize * 1.5; // Increased from 1.2 to add more space between lines
     const maxWidth = 288 * scaleFactor;
     const horizontalPadding = 12 * scaleFactor;
     const verticalPadding = 8 * scaleFactor;
